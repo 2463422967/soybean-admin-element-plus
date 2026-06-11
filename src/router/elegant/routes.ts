@@ -96,6 +96,103 @@ export const generatedRoutes: GeneratedRoute[] = [
     ]
   },
   {
+    name: 'basic-manage',
+    path: '/basic-manage',
+    component: 'layout.base',
+    meta: {
+      title: '基础管理',
+      icon: 'carbon:data-base',
+      order: 2,
+      i18nKey: 'route.basic-manage'
+    },
+    children: [
+      {
+        name: 'basic-manage_app-version-management',
+        path: '/basic-manage/app-version-management',
+        component: 'view.basic-manage_app-version-management',
+        meta: {
+          title: 'App版本管理',
+          icon: 'material-symbols:app-promo-outline',
+          order: 7,
+          keepAlive: true,
+          i18nKey: 'route.basic-manage_app-version-management'
+        }
+      },
+      {
+        name: 'basic-manage_location-management',
+        path: '/basic-manage/location-management',
+        component: 'view.basic-manage_location-management',
+        meta: {
+          title: '库位管理',
+          icon: 'mdi:map-marker-radius-outline',
+          order: 3,
+          keepAlive: true,
+          i18nKey: 'route.basic-manage_location-management'
+        }
+      },
+      {
+        name: 'basic-manage_material-management',
+        path: '/basic-manage/material-management',
+        component: 'view.basic-manage_material-management',
+        meta: {
+          title: '物料管理',
+          icon: 'mdi:cube-outline',
+          order: 4,
+          keepAlive: true,
+          i18nKey: 'route.basic-manage_material-management'
+        }
+      },
+      {
+        name: 'basic-manage_personnel-management',
+        path: '/basic-manage/personnel-management',
+        component: 'view.basic-manage_personnel-management',
+        meta: {
+          title: '人员管理',
+          icon: 'mdi:account-group-outline',
+          order: 5,
+          keepAlive: true,
+          i18nKey: 'route.basic-manage_personnel-management'
+        }
+      },
+      {
+        name: 'basic-manage_role-management',
+        path: '/basic-manage/role-management',
+        component: 'view.basic-manage_role-management',
+        meta: {
+          title: '角色管理',
+          icon: 'carbon:user-role',
+          order: 6,
+          keepAlive: true,
+          i18nKey: 'route.basic-manage_role-management'
+        }
+      },
+      {
+        name: 'basic-manage_shelf-management',
+        path: '/basic-manage/shelf-management',
+        component: 'view.basic-manage_shelf-management',
+        meta: {
+          title: '货架管理',
+          icon: 'mdi:archive-outline',
+          order: 2,
+          keepAlive: true,
+          i18nKey: 'route.basic-manage_shelf-management'
+        }
+      },
+      {
+        name: 'basic-manage_warehouse-management',
+        path: '/basic-manage/warehouse-management',
+        component: 'view.basic-manage_warehouse-management',
+        meta: {
+          title: '仓库管理',
+          icon: 'mdi:warehouse',
+          order: 1,
+          keepAlive: true,
+          i18nKey: 'route.basic-manage_warehouse-management'
+        }
+      }
+    ]
+  },
+  {
     name: 'function',
     path: '/function',
     component: 'layout.base',

@@ -7,12 +7,13 @@ import { request } from '../request';
  * @param password Password
  */
 export function fetchLogin(userName: string, password: string) {
-  return request<Api.Auth.LoginToken>({
+  return request<Api.Auth.LoginResult>({
     url: '/auth/login',
     method: 'post',
     data: {
-      userName,
-      password
+      account: userName,
+      password,
+      deviceType: 'PC'
     }
   });
 }

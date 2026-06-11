@@ -5,6 +5,15 @@ declare namespace Api {
    * backend api module: "auth"
    */
   namespace Auth {
+    interface LoginResult {
+      code: string;
+      department?: string;
+      roleMenu?: string[];
+      name: string;
+      disableFlag?: boolean;
+      kbToken: string;
+    }
+
     interface LoginToken {
       token: string;
       refreshToken: string;

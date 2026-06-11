@@ -18,6 +18,8 @@ declare namespace StorageType {
     mixSiderFixed: CommonType.YesOrNo;
     /** The refresh token */
     refreshToken: string;
+    /** The mapped user info from the current backend login response */
+    authUserInfo: Api.Auth.UserInfo;
     /** The theme color */
     themeColor: string;
     /** The dark mode */

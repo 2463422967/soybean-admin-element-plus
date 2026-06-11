@@ -2,7 +2,7 @@ import { computed, reactive, ref } from 'vue';
 import { useRoute } from 'vue-router';
 import { defineStore } from 'pinia';
 import { useLoading } from '@sa/hooks';
-import { fetchGetUserInfo, fetchLogin } from '@/service/api';
+import { fetchLogin } from '@/service/api';
 import { useRouterPush } from '@/hooks/common/router';
 import { localStg } from '@/utils/storage';
 import { SetupStoreId } from '@/enum';
@@ -87,6 +87,15 @@ export const useAuthStore = defineStore(SetupStoreId.Auth, () => {
     return false;
   }
 
+  function mapLoginResultToUserInfo(loginResult: Api.Auth.LoginResult): Api.Auth.UserInfo {
+    return {
+      userId: loginResult.code,
+      userName: loginResult.name || loginResult.code,
+      roles: [import.meta.env.VITE_STATIC_SUPER_ROLE],
+      buttons: loginResult.roleMenu || []
+    };
+  }
+
   /**
    * Login
    *
@@ -97,10 +106,10 @@ export const useAuthStore = defineStore(SetupStoreId.Auth, () => {
   async function login(userName: string, password: string, redirect = true) {
     startLoading();
 
-    const { data: loginToken, error } = await fetchLogin(userName, password);
+    const { data: loginResult, error } = await fetchLogin(userName, password);
 
     if (!error) {
-      const pass = await loginByToken(loginToken);
+      const pass = loginByBackendResult(loginResult);
 
       if (pass) {
         // Check if the tab needs to be cleared
@@ -126,43 +135,30 @@ export const useAuthStore = defineStore(SetupStoreId.Auth, () => {
     endLoading();
   }
 
-  async function loginByToken(loginToken: Api.Auth.LoginToken) {
+  function loginByBackendResult(loginResult: Api.Auth.LoginResult) {
     // 1. stored in the localStorage, the later requests need it in headers
-    localStg.set('token', loginToken.token);
-    localStg.set('refreshToken', loginToken.refreshToken);
+    localStg.set('token', loginResult.kbToken);
+    localStg.set('refreshToken', loginResult.kbToken);
 
-    // 2. get user info
-    const pass = await getUserInfo();
+    // 2. map current backend login response to Soybean auth user info
+    const info = mapLoginResultToUserInfo(loginResult);
+    localStg.set('authUserInfo', info);
+    Object.assign(userInfo, info);
 
-    if (pass) {
-      token.value = loginToken.token;
+    token.value = loginResult.kbToken;
 
-      return true;
-    }
-
-    return false;
-  }
-
-  async function getUserInfo() {
-    const { data: info, error } = await fetchGetUserInfo();
-
-    if (!error) {
-      // update store
-      Object.assign(userInfo, info);
-
-      return true;
-    }
-
-    return false;
+    return true;
   }
 
   async function initUserInfo() {
     const hasToken = getToken();
 
     if (hasToken) {
-      const pass = await getUserInfo();
+      const cachedUserInfo = localStg.get('authUserInfo');
 
-      if (!pass) {
+      if (cachedUserInfo) {
+        Object.assign(userInfo, cachedUserInfo);
+      } else {
         resetStore();
       }
     }

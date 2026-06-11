@@ -39,6 +39,14 @@ declare module "@elegant-router/types" {
     "alova_request": "/alova/request";
     "alova_scenes": "/alova/scenes";
     "alova_user": "/alova/user";
+    "basic-manage": "/basic-manage";
+    "basic-manage_app-version-management": "/basic-manage/app-version-management";
+    "basic-manage_location-management": "/basic-manage/location-management";
+    "basic-manage_material-management": "/basic-manage/material-management";
+    "basic-manage_personnel-management": "/basic-manage/personnel-management";
+    "basic-manage_role-management": "/basic-manage/role-management";
+    "basic-manage_shelf-management": "/basic-manage/shelf-management";
+    "basic-manage_warehouse-management": "/basic-manage/warehouse-management";
     "function": "/function";
     "function_hide-child": "/function/hide-child";
     "function_hide-child_one": "/function/hide-child/one";
@@ -138,6 +146,7 @@ declare module "@elegant-router/types" {
     | "500"
     | "about"
     | "alova"
+    | "basic-manage"
     | "function"
     | "home"
     | "iframe-page"
@@ -173,6 +182,13 @@ declare module "@elegant-router/types" {
     | "alova_request"
     | "alova_scenes"
     | "alova_user"
+    | "basic-manage_app-version-management"
+    | "basic-manage_location-management"
+    | "basic-manage_material-management"
+    | "basic-manage_personnel-management"
+    | "basic-manage_role-management"
+    | "basic-manage_shelf-management"
+    | "basic-manage_warehouse-management"
     | "function_hide-child_one"
     | "function_hide-child_three"
     | "function_hide-child_two"

@@ -753,10 +753,12 @@ declare namespace App {
 
     /** The backend service response data */
     type Response<T = unknown> = {
+      /** Whether the backend service request is successful */
+      success: boolean;
       /** The backend service response code */
-      code: string;
+      code: number | string;
       /** The backend service response message */
-      msg: string;
+      message: string | null;
       /** The backend service response data */
       data: T;
     };
