@@ -62,6 +62,22 @@ declare namespace Wms {
 
     type MaterialList = Api.Common.PaginatingQueryRecord<Material>;
 
+    interface Production {
+      customer?: string;
+      materialName?: string;
+      qty?: number | string;
+      materialSpec?: string;
+      materialCode?: string;
+      box?: number | string;
+      color?: string;
+      saleNo?: string;
+    }
+
+    interface Supplier {
+      code: string;
+      name: string;
+    }
+
     interface Shelf {
       id: number;
       shelfName: string;
@@ -110,5 +126,64 @@ declare namespace Wms {
     type AppVersionSearchParams = PageSearchParams;
 
     type AppVersionList = Api.Common.PaginatingQueryRecord<AppVersion>;
+  }
+
+  namespace Label {
+    type TemplateKey = 'model1' | 'model2' | 'model3' | 'model4';
+
+    type FieldType = 'input' | 'date' | 'select';
+
+    interface FieldOption {
+      label: string;
+      value: string;
+      item?: Wms.BaseInfo.Production | Wms.BaseInfo.Supplier | Wms.BaseInfo.User;
+    }
+
+    interface FieldConfig {
+      label: string;
+      prop: keyof FormData;
+      type: FieldType;
+      span?: number;
+      placeholder?: string;
+      lookup?: 'material' | 'production' | 'semiProduction';
+      optionsKey?: 'productionOrders' | 'semiMaterials' | 'workers' | 'suppliers';
+      isModel1Order?: boolean;
+      isModel2Material?: boolean;
+    }
+
+    interface TemplateConfig {
+      key: TemplateKey;
+      title: string;
+      label: string;
+      sizeClass: string;
+      formFields: FieldConfig[];
+      printFields: FieldConfig[];
+    }
+
+    interface FormData {
+      customerCode?: string;
+      orderCode?: string;
+      batchCode?: string;
+      materialCode?: string;
+      materialName?: string;
+      modelSpec?: string;
+      qty?: string | number;
+      quantity?: string | number;
+      color?: string;
+      productionDate?: string;
+      worker?: string;
+      inspector?: string;
+      supplier?: string;
+      remark?: string;
+      checkResult?: string;
+    }
+
+    interface QrPayload {
+      m?: string | number;
+      b?: string | number;
+      p?: string | number;
+      q?: string | number;
+      i: string;
+    }
   }
 }

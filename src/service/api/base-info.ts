@@ -62,3 +62,48 @@ export function fetchGetAppVersionList(params: Wms.BaseInfo.AppVersionSearchPara
     data: params
   });
 }
+
+/** get material detail by material code */
+export function fetchGetMaterialInfo(materialCode: string) {
+  return request<Wms.BaseInfo.Material>({
+    url: '/baseInfo/findMaterial',
+    method: 'post',
+    params: { materialCode }
+  });
+}
+
+/** get production list by batch number */
+export function fetchGetProductionList(flot: string) {
+  return request<Wms.BaseInfo.Production[]>({
+    url: '/baseInfo/findProduction',
+    method: 'post',
+    params: { flot }
+  });
+}
+
+/** get semi-finished production list by batch number */
+export function fetchGetSemiProductionList(flot: string) {
+  return request<Wms.BaseInfo.Production[]>({
+    url: '/baseInfo/findProductionDTOBySemi',
+    method: 'post',
+    params: { flot }
+  });
+}
+
+/** get supplier list */
+export function fetchGetSupplierList(name?: string) {
+  return request<Wms.BaseInfo.Supplier[]>({
+    url: '/baseInfo/findSupplierList',
+    method: 'post',
+    params: { name }
+  });
+}
+
+/** get ERP user list */
+export function fetchGetErpUserList(params: Wms.BaseInfo.UserSearchParams = { current: 1, size: 10000 }) {
+  return request<Wms.BaseInfo.User[]>({
+    url: '/user/ErpUserList',
+    method: 'post',
+    data: params
+  });
+}

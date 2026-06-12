@@ -181,6 +181,7 @@ const local: App.I18n.Schema = {
     alova_scenes: 'Scenario Request',
     'basic-manage': 'Basic Management',
     'basic-manage_app-version-management': 'App Version Management',
+    'basic-manage_label-management': 'Label Management',
     'basic-manage_location-management': 'Location Management',
     'basic-manage_material-management': 'Material Management',
     'basic-manage_personnel-management': 'Personnel Management',

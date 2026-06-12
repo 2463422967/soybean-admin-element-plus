@@ -119,6 +119,18 @@ export const generatedRoutes: GeneratedRoute[] = [
         }
       },
       {
+        name: 'basic-manage_label-management',
+        path: '/basic-manage/label-management',
+        component: 'view.basic-manage_label-management',
+        meta: {
+          title: '标签管理',
+          icon: 'mdi:qrcode',
+          order: 8,
+          keepAlive: true,
+          i18nKey: 'route.basic-manage_label-management'
+        }
+      },
+      {
         name: 'basic-manage_location-management',
         path: '/basic-manage/location-management',
         component: 'view.basic-manage_location-management',

@@ -181,6 +181,7 @@ const local: App.I18n.Schema = {
     alova_scenes: '场景化请求',
     'basic-manage': '基础管理',
     'basic-manage_app-version-management': '版本管理',
+    'basic-manage_label-management': '标签管理',
     'basic-manage_location-management': '库位管理',
     'basic-manage_material-management': '物料管理',
     'basic-manage_personnel-management': '人员管理',
