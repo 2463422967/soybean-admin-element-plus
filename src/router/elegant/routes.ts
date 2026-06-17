@@ -856,6 +856,55 @@ export const generatedRoutes: GeneratedRoute[] = [
     ]
   },
   {
+    name: 'report-analyze',
+    path: '/report-analyze',
+    component: 'layout.base',
+    meta: {
+      title: '报表分析',
+      i18nKey: 'route.report-analyze',
+      icon: 'mdi:chart-box-outline',
+      order: 8
+    },
+    children: [
+      {
+        name: 'report-analyze_inventory-report',
+        path: '/report-analyze/inventory-report',
+        component: 'view.report-analyze_inventory-report',
+        meta: {
+          title: '库存报表',
+          i18nKey: 'route.report-analyze_inventory-report',
+          icon: 'mdi:chart-pie',
+          order: 1,
+          keepAlive: true
+        }
+      },
+      {
+        name: 'report-analyze_operation-report',
+        path: '/report-analyze/operation-report',
+        component: 'view.report-analyze_operation-report',
+        meta: {
+          title: '作业报表',
+          i18nKey: 'route.report-analyze_operation-report',
+          icon: 'mdi:chart-line',
+          order: 2,
+          keepAlive: true
+        }
+      },
+      {
+        name: 'report-analyze_total-report',
+        path: '/report-analyze/total-report',
+        component: 'view.report-analyze_total-report',
+        meta: {
+          title: '仓储综合看板',
+          i18nKey: 'route.report-analyze_total-report',
+          icon: 'mdi:view-dashboard-outline',
+          order: 3,
+          keepAlive: true
+        }
+      }
+    ]
+  },
+  {
     name: 'user-center',
     path: '/user-center',
     component: 'layout.base$view.user-center',

@@ -9,3 +9,4 @@ export * from './receiving';
 export * from './outbound';
 export * from './transfer';
 export * from './stock-count';
+export * from './report-analysis';

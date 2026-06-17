@@ -73,6 +73,9 @@ export const views: Record<LastLevelRouteKey, RouteComponent | (() => Promise<Ro
   plugin_tables_vtable: () => import("@/views/plugin/tables/vtable/index.vue"),
   plugin_typeit: () => import("@/views/plugin/typeit/index.vue"),
   plugin_video: () => import("@/views/plugin/video/index.vue"),
+  "report-analyze_inventory-report": () => import("@/views/report-analyze/inventory-report/index.vue"),
+  "report-analyze_operation-report": () => import("@/views/report-analyze/operation-report/index.vue"),
+  "report-analyze_total-report": () => import("@/views/report-analyze/total-report/index.vue"),
   "user-center": () => import("@/views/user-center/index.vue"),
   "warehouse-inventory": () => import("@/views/warehouse-inventory/index.vue"),
 };

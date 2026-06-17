@@ -252,6 +252,10 @@ const routeMap: RouteMap = {
   "plugin_tables_vtable": "/plugin/tables/vtable",
   "plugin_typeit": "/plugin/typeit",
   "plugin_video": "/plugin/video",
+  "report-analyze": "/report-analyze",
+  "report-analyze_inventory-report": "/report-analyze/inventory-report",
+  "report-analyze_operation-report": "/report-analyze/operation-report",
+  "report-analyze_total-report": "/report-analyze/total-report",
   "user-center": "/user-center",
   "warehouse-inventory": "/warehouse-inventory"
 };

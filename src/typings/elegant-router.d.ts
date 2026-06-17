@@ -106,6 +106,10 @@ declare module "@elegant-router/types" {
     "plugin_tables_vtable": "/plugin/tables/vtable";
     "plugin_typeit": "/plugin/typeit";
     "plugin_video": "/plugin/video";
+    "report-analyze": "/report-analyze";
+    "report-analyze_inventory-report": "/report-analyze/inventory-report";
+    "report-analyze_operation-report": "/report-analyze/operation-report";
+    "report-analyze_total-report": "/report-analyze/total-report";
     "user-center": "/user-center";
     "warehouse-inventory": "/warehouse-inventory";
   };
@@ -170,6 +174,7 @@ declare module "@elegant-router/types" {
     | "multi-menu"
     | "outbound-manage"
     | "plugin"
+    | "report-analyze"
     | "user-center"
     | "warehouse-inventory"
   >;
@@ -248,6 +253,9 @@ declare module "@elegant-router/types" {
     | "plugin_tables_vtable"
     | "plugin_typeit"
     | "plugin_video"
+    | "report-analyze_inventory-report"
+    | "report-analyze_operation-report"
+    | "report-analyze_total-report"
     | "user-center"
     | "warehouse-inventory"
   >;

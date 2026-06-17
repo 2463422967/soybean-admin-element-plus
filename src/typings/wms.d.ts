@@ -456,4 +456,77 @@ declare namespace Wms {
 
     type BodyList = Api.Common.PaginatingQueryRecord<Body>;
   }
+
+  namespace ReportAnalysis {
+    interface InventoryWarningDetails {
+      materialCode?: string;
+      materialName?: string;
+      stockNum?: number | string;
+      warningSituation?: string;
+    }
+
+    interface InventoryCategoryRatio {
+      materialGroupName?: string;
+      materialGroupNum?: number | string;
+      itemStyle?: {
+        color?: string;
+      };
+    }
+
+    interface InventoryWarningDistribution {
+      warningGroupName?: string;
+      warningNum?: number;
+    }
+
+    interface InventoryStockComparison {
+      warehouseName?: string;
+      stockNum?: number | string;
+    }
+
+    interface InventoryReport {
+      inventoryWarning?: InventoryWarningDetails[];
+      inventoryClassification?: InventoryCategoryRatio[];
+      inventoryWarningDistribution?: InventoryWarningDistribution[];
+      inventoryStockComparison?: InventoryStockComparison[];
+    }
+
+    interface AssignmentTypeDistribution {
+      assignmentType?: string;
+      assignmentCount?: number;
+      itemStyle?: {
+        color?: string;
+      };
+    }
+
+    interface PersonPerformanceComparison {
+      personName?: string;
+      receivingCount?: number;
+      pickingCount?: number;
+    }
+
+    interface WorkloadTrend {
+      date?: string;
+      receivingCount?: number;
+      pickingCount?: number;
+      internalCount?: number;
+    }
+
+    interface WorkQualityAnalysis {
+      receivingCount?: number;
+      shelfCount?: number;
+      pickingCount?: number;
+      internalCount?: number;
+      waitShelfCount?: number;
+      waitInspectionCount?: number;
+      totalCount?: number;
+    }
+
+    interface HomeworkReport {
+      assignmentTypeDistribution?: AssignmentTypeDistribution[];
+      personPerformanceComparisonYesterday?: PersonPerformanceComparison[];
+      personPerformanceComparison7Days?: PersonPerformanceComparison[];
+      workloadTrend?: WorkloadTrend[];
+      workQualityAnalysis?: WorkQualityAnalysis;
+    }
+  }
 }
