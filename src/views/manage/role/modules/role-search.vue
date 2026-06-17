@@ -29,33 +29,33 @@ function search() {
 <template>
   <ElCard class="card-wrapper">
     <ElCollapse v-model="activeName">
-      <ElCollapseItem :title="$t('common.search')" name="role-search">
+      <ElCollapseItem title="搜索条件" name="role-search">
         <ElForm :model="model" label-position="right" :label-width="80">
           <ElRow :gutter="24">
             <ElCol :lg="6" :md="8" :sm="12">
-              <ElFormItem :label="$t('page.manage.role.roleName')" prop="roleName">
-                <ElInput v-model="model.roleName" :placeholder="$t('page.manage.role.form.roleName')" />
+              <ElFormItem label="角色名称" prop="name">
+                <ElInput v-model="model.name" clearable placeholder="请输入角色名称" />
               </ElFormItem>
             </ElCol>
             <ElCol :lg="6" :md="8" :sm="12">
-              <ElFormItem :label="$t('page.manage.role.roleCode')" prop="roleCode">
-                <ElInput v-model="model.roleCode" :placeholder="$t('page.manage.role.form.roleCode')" />
+              <ElFormItem label="角色编码" prop="code">
+                <ElInput v-model="model.code" clearable placeholder="请输入角色编码" />
               </ElFormItem>
             </ElCol>
             <ElCol :lg="6" :md="8" :sm="12">
-              <ElFormItem :label="$t('page.manage.role.roleStatus')" prop="status">
-                <ElSelect v-model="model.status" :placeholder="$t('page.manage.role.form.roleStatus')" clearable>
+              <ElFormItem label="状态" prop="status">
+                <ElSelect v-model="model.status" clearable placeholder="请选择状态">
                   <ElOption
                     v-for="{ label, value } in translateOptions(enableStatusOptions)"
                     :key="value"
                     :label="label"
                     :value="value"
-                  ></ElOption>
+                  />
                 </ElSelect>
               </ElFormItem>
             </ElCol>
             <ElCol :lg="6" :md="24" :sm="24">
-              <ElSpace class="w-full justify-end" alignment="end">
+              <ElSpace class="w-full justify-end">
                 <ElButton @click="reset">
                   <template #icon>
                     <icon-ic-round-refresh class="text-icon" />

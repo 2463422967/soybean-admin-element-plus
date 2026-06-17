@@ -1,18 +1,13 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue';
-import { useBoolean } from '@sa/hooks';
-import { enableStatusOptions } from '@/constants/business';
+import { fetchAddRole, fetchGetRoleInfo, fetchUpdateRole } from '@/service/api';
 import { useForm, useFormRules } from '@/hooks/common/form';
 import { $t } from '@/locales';
-import MenuAuthModal from './menu-auth-modal.vue';
-import ButtonAuthModal from './button-auth-modal.vue';
 
 defineOptions({ name: 'RoleOperateDrawer' });
 
 interface Props {
-  /** the type of operation */
   operateType: UI.TableOperateType;
-  /** the edit row data */
   rowData?: Api.SystemManage.Role | null;
 }
 
@@ -30,48 +25,67 @@ const visible = defineModel<boolean>('visible', {
 
 const { formRef, validate, restoreValidation } = useForm();
 const { defaultRequiredRule } = useFormRules();
-const { bool: menuAuthVisible, setTrue: openMenuAuthModal } = useBoolean();
-const { bool: buttonAuthVisible, setTrue: openButtonAuthModal } = useBoolean();
 
-const title = computed(() => {
-  const titles: Record<UI.TableOperateType, string> = {
-    add: $t('page.manage.role.addRole'),
-    edit: $t('page.manage.role.editRole')
-  };
-  return titles[props.operateType];
-});
+type Model = {
+  name: string;
+  code: string;
+  description: string;
+  sort: number;
+  status: Api.SystemManage.EnableStatus;
+};
 
-type Model = Pick<Api.SystemManage.Role, 'roleName' | 'roleCode' | 'roleDesc' | 'status'>;
+const loading = ref(false);
+const model = ref<Model>(createDefaultModel());
 
-const model = ref(createDefaultModel());
+const title = computed(() => (props.operateType === 'add' ? '新增角色' : '编辑角色'));
 
-function createDefaultModel(): Model {
-  return {
-    roleName: '',
-    roleCode: '',
-    roleDesc: '',
-    status: undefined
-  };
-}
-
-type RuleKey = Exclude<keyof Model, 'roleDesc'>;
-
-const rules: Record<RuleKey, App.Global.FormRule> = {
-  roleName: defaultRequiredRule,
-  roleCode: defaultRequiredRule,
+const rules: Record<Exclude<keyof Model, 'description' | 'sort'>, App.Global.FormRule> = {
+  name: defaultRequiredRule,
+  code: defaultRequiredRule,
   status: defaultRequiredRule
 };
 
-const roleId = computed(() => props.rowData?.id || -1);
+function createDefaultModel(): Model {
+  return {
+    name: '',
+    code: '',
+    description: '',
+    sort: 0,
+    status: '1'
+  };
+}
 
-const isEdit = computed(() => props.operateType === 'edit');
-
-function handleInitModel() {
+async function initModel() {
   model.value = createDefaultModel();
 
-  if (props.operateType === 'edit' && props.rowData) {
-    Object.assign(model.value, props.rowData);
+  if (props.operateType !== 'edit' || !props.rowData?.id) {
+    return;
   }
+
+  loading.value = true;
+
+  const { error, data } = await fetchGetRoleInfo(props.rowData.id);
+
+  loading.value = false;
+
+  if (!error) {
+    model.value = {
+      name: data.name || '',
+      code: data.code || '',
+      description: data.description || '',
+      sort: data.sort ?? 0,
+      status: (String(data.status || '1') === '2' ? '2' : '1') as Api.SystemManage.EnableStatus
+    };
+    return;
+  }
+
+  model.value = {
+    name: props.rowData.name || '',
+    code: props.rowData.code || '',
+    description: props.rowData.description || '',
+    sort: props.rowData.sort ?? 0,
+    status: (String(props.rowData.status || '1') === '2' ? '2' : '1') as Api.SystemManage.EnableStatus
+  };
 }
 
 function closeDrawer() {
@@ -80,44 +94,65 @@ function closeDrawer() {
 
 async function handleSubmit() {
   await validate();
-  // request
-  window.$message?.success($t('common.updateSuccess'));
-  closeDrawer();
-  emit('submitted');
+
+  const payload: Api.SystemManage.SaveRoleParams = {
+    name: model.value.name.trim(),
+    code: model.value.code.trim(),
+    description: model.value.description.trim() || null,
+    sort: model.value.sort,
+    status: model.value.status
+  };
+
+  const request =
+    props.operateType === 'add' || !props.rowData?.id
+      ? fetchAddRole(payload)
+      : fetchUpdateRole({
+          ...payload,
+          id: props.rowData.id
+        });
+
+  const { error } = await request;
+
+  if (!error) {
+    window.$message?.success($t('common.updateSuccess'));
+    closeDrawer();
+    emit('submitted');
+  }
 }
 
-watch(visible, () => {
-  if (visible.value) {
-    handleInitModel();
-    restoreValidation();
+watch(visible, async newVisible => {
+  if (!newVisible) {
+    return;
   }
+
+  await restoreValidation();
+  await initModel();
 });
 </script>
 
 <template>
-  <ElDrawer v-model="visible" :title="title" :size="360">
-    <ElForm ref="formRef" :model="model" :rules="rules" label-position="top">
-      <ElFormItem :label="$t('page.manage.role.roleName')" prop="roleName">
-        <ElInput v-model="model.roleName" :placeholder="$t('page.manage.role.form.roleName')" />
+  <ElDrawer v-model="visible" :title="title" :size="420">
+    <ElForm ref="formRef" v-loading="loading" :model="model" :rules="rules" label-position="top">
+      <ElFormItem label="角色名称" prop="name">
+        <ElInput v-model="model.name" placeholder="请输入角色名称" />
       </ElFormItem>
-      <ElFormItem :label="$t('page.manage.role.roleCode')" prop="roleCode">
-        <ElInput v-model="model.roleCode" :placeholder="$t('page.manage.role.form.roleCode')" />
+      <ElFormItem label="角色编码" prop="code">
+        <ElInput v-model="model.code" placeholder="请输入角色编码" />
       </ElFormItem>
-      <ElFormItem :label="$t('page.manage.role.roleStatus')" prop="status">
+      <ElFormItem label="角色描述" prop="description">
+        <ElInput v-model="model.description" type="textarea" :rows="3" placeholder="请输入角色描述" />
+      </ElFormItem>
+      <ElFormItem label="排序" prop="sort">
+        <ElInputNumber v-model="model.sort" class="w-full" :min="0" :step="1" />
+      </ElFormItem>
+      <ElFormItem label="状态" prop="status">
         <ElRadioGroup v-model="model.status">
-          <ElRadio v-for="{ label, value } in enableStatusOptions" :key="value" :value="value" :label="$t(label)" />
+          <ElRadio value="1" label="启用" />
+          <ElRadio value="2" label="禁用" />
         </ElRadioGroup>
       </ElFormItem>
-      <ElFormItem :label="$t('page.manage.role.roleDesc')" prop="roleDesc">
-        <ElInput v-model="model.roleDesc" :placeholder="$t('page.manage.role.form.roleDesc')" />
-      </ElFormItem>
     </ElForm>
-    <ElSpace v-if="isEdit">
-      <ElButton @click="openMenuAuthModal">{{ $t('page.manage.role.menuAuth') }}</ElButton>
-      <MenuAuthModal v-model:visible="menuAuthVisible" :role-id="roleId" />
-      <ElButton @click="openButtonAuthModal">{{ $t('page.manage.role.buttonAuth') }}</ElButton>
-      <ButtonAuthModal v-model:visible="buttonAuthVisible" :role-id="roleId" />
-    </ElSpace>
+
     <template #footer>
       <ElSpace :size="16">
         <ElButton @click="closeDrawer">{{ $t('common.cancel') }}</ElButton>

@@ -1,27 +1,35 @@
 <script setup lang="tsx">
 import { ref } from 'vue';
-import { enableStatusRecord, userGenderRecord } from '@/constants/business';
-import { fetchGetUserList } from '@/service/api';
-import { defaultTransform, useTableOperate, useUIPaginatedTable } from '@/hooks/common/table';
+import { enableStatusRecord } from '@/constants/business';
+import { fetchGetUserList, fetchUpdateUserStatus } from '@/service/api';
+import { defaultTransform, useUIPaginatedTable } from '@/hooks/common/table';
 import { $t } from '@/locales';
+import UserErpImportModal from './modules/user-erp-import-modal.vue';
 import UserOperateDrawer from './modules/user-operate-drawer.vue';
+import UserPasswordModal from './modules/user-password-modal.vue';
 import UserSearch from './modules/user-search.vue';
 
 defineOptions({ name: 'UserManage' });
 
 const searchParams = ref(getInitSearchParams());
+const drawerVisible = ref(false);
+const passwordModalVisible = ref(false);
+const erpImportVisible = ref(false);
+const editingData = ref<Api.SystemManage.User | null>(null);
 
 function getInitSearchParams(): Api.SystemManage.UserSearchParams {
   return {
     current: 1,
     size: 30,
-    status: undefined,
-    userName: undefined,
-    userGender: undefined,
-    nickName: undefined,
-    userPhone: undefined,
-    userEmail: undefined
+    code: undefined,
+    name: undefined,
+    department: undefined,
+    status: undefined
   };
+}
+
+function getStatusValue(status: Api.SystemManage.User['status']) {
+  return String(status || '1') === '2' ? '2' : '1';
 }
 
 const { columns, columnChecks, data, getData, getDataByPage, loading, mobilePagination } = useUIPaginatedTable({
@@ -30,150 +38,125 @@ const { columns, columnChecks, data, getData, getDataByPage, loading, mobilePagi
     pageSize: searchParams.value.size
   },
   api: () => fetchGetUserList(searchParams.value),
-  transform: response => {
-    return defaultTransform(response);
-  },
+  transform: response => defaultTransform(response),
   onPaginationParamsChange: params => {
-    searchParams.value.current = params.currentPage;
-    searchParams.value.size = params.pageSize;
+    searchParams.value.current = params.currentPage ?? 1;
+    searchParams.value.size = params.pageSize ?? 30;
   },
   columns: () => [
-    { prop: 'selection', type: 'selection', width: 48 },
     { prop: 'index', type: 'index', label: $t('common.index'), width: 64 },
-    { prop: 'userName', label: $t('page.manage.user.userName'), minWidth: 100 },
+    { prop: 'code', label: '工号', minWidth: 130 },
+    { prop: 'name', label: '姓名', minWidth: 120 },
     {
-      prop: 'userGender',
-      label: $t('page.manage.user.userGender'),
-      width: 100,
-      formatter: row => {
-        if (row.userGender === undefined) {
-          return '';
-        }
-
-        const tagMap: Record<Api.SystemManage.UserGender, UI.ThemeColor> = {
-          1: 'primary',
-          2: 'danger'
-        };
-
-        const label = $t(userGenderRecord[row.userGender]);
-
-        return <ElTag type={tagMap[row.userGender]}>{label}</ElTag>;
-      }
+      prop: 'department',
+      label: '部门',
+      minWidth: 160,
+      formatter: row => row.department || '-'
     },
-    { prop: 'nickName', label: $t('page.manage.user.nickName'), minWidth: 100 },
-    { prop: 'userPhone', label: $t('page.manage.user.userPhone'), width: 120 },
-    { prop: 'userEmail', label: $t('page.manage.user.userEmail'), minWidth: 200 },
+    {
+      prop: 'roleNames',
+      label: '角色',
+      minWidth: 180,
+      formatter: row => row.roleNames?.join('、') || '-'
+    },
     {
       prop: 'status',
-      label: $t('page.manage.user.userStatus'),
+      label: '状态',
       align: 'center',
+      width: 100,
       formatter: row => {
-        if (row.status === undefined) {
-          return '';
-        }
-
-        const tagMap: Record<Api.Common.EnableStatus, UI.ThemeColor> = {
-          1: 'success',
-          2: 'warning'
-        };
-
-        const label = $t(enableStatusRecord[row.status]);
-
-        return <ElTag type={tagMap[row.status]}>{label}</ElTag>;
+        const status = getStatusValue(row.status);
+        return <ElTag type={status === '1' ? 'success' : 'warning'}>{$t(enableStatusRecord[status])}</ElTag>;
       }
     },
     {
       prop: 'operate',
       label: $t('common.operate'),
       align: 'center',
-      width: 130,
-      formatter: row => (
-        <div class="flex-center">
-          <ElButton type="primary" plain size="small" onClick={() => edit(row.id)}>
-            {$t('common.edit')}
-          </ElButton>
-          <ElPopconfirm title={$t('common.confirmDelete')} onConfirm={() => handleDelete(row.id)}>
-            {{
-              reference: () => (
-                <ElButton type="danger" plain size="small">
-                  {$t('common.delete')}
-                </ElButton>
-              )
-            }}
-          </ElPopconfirm>
-        </div>
-      )
+      width: 290,
+      formatter: row => {
+        const status = getStatusValue(row.status);
+        const nextStatus = status === '1' ? '2' : '1';
+        const actionText = nextStatus === '1' ? '启用' : '禁用';
+
+        return (
+          <ElSpace>
+            <ElButton type="primary" plain size="small" onClick={() => handleEdit(row)}>
+              编辑角色
+            </ElButton>
+            <ElButton plain size="small" onClick={() => handleResetPassword(row)}>
+              重置密码
+            </ElButton>
+            <ElPopconfirm title={`确认${actionText}该用户吗？`} onConfirm={() => handleUpdateStatus(row, nextStatus)}>
+              {{
+                reference: () => (
+                  <ElButton type={nextStatus === '1' ? 'success' : 'warning'} plain size="small">
+                    {actionText}
+                  </ElButton>
+                )
+              }}
+            </ElPopconfirm>
+          </ElSpace>
+        );
+      }
     }
   ]
 });
-
-const {
-  drawerVisible,
-  operateType,
-  editingData,
-  handleAdd,
-  handleEdit,
-  checkedRowKeys,
-  onBatchDeleted,
-  onDeleted
-  // closeDrawer
-} = useTableOperate(data, 'id', getData);
-
-async function handleBatchDelete() {
-  // eslint-disable-next-line no-console
-  console.log(checkedRowKeys.value);
-  // request
-
-  onBatchDeleted();
-}
-
-function handleDelete(id: number) {
-  // eslint-disable-next-line no-console
-  console.log(id);
-  // request
-
-  onDeleted();
-}
 
 function resetSearchParams() {
   searchParams.value = getInitSearchParams();
 }
 
-function edit(id: number) {
-  handleEdit(id);
+function handleEdit(row: Api.SystemManage.User) {
+  editingData.value = row;
+  drawerVisible.value = true;
+}
+
+function handleResetPassword(row: Api.SystemManage.User) {
+  editingData.value = row;
+  passwordModalVisible.value = true;
+}
+
+async function handleUpdateStatus(row: Api.SystemManage.User, status: Api.SystemManage.EnableStatus) {
+  const { error } = await fetchUpdateUserStatus({
+    userId: row.id,
+    status
+  });
+
+  if (!error) {
+    window.$message?.success($t('common.updateSuccess'));
+    await getData();
+  }
 }
 </script>
 
 <template>
   <div class="min-h-500px flex-col-stretch gap-16px overflow-hidden lt-sm:overflow-auto">
     <UserSearch v-model:model="searchParams" @reset="resetSearchParams" @search="getDataByPage" />
+
     <ElCard class="card-wrapper sm:flex-1-hidden">
       <template #header>
         <div class="flex items-center justify-between">
-          <p>{{ $t('page.manage.user.title') }}</p>
-          <TableHeaderOperation
-            v-model:columns="columnChecks"
-            :disabled-delete="checkedRowKeys.length === 0"
-            :loading="loading"
-            @add="handleAdd"
-            @delete="handleBatchDelete"
-            @refresh="getData"
-          />
+          <p>用户管理</p>
+          <TableHeaderOperation v-model:columns="columnChecks" :loading="loading" @refresh="getData">
+            <template #default>
+              <ElButton type="primary" plain @click="erpImportVisible = true">
+                <template #icon>
+                  <icon-mdi-account-arrow-down-outline class="text-icon" />
+                </template>
+                导入 ERP 人员
+              </ElButton>
+            </template>
+          </TableHeaderOperation>
         </div>
       </template>
+
       <div class="h-[calc(100%-52px)]">
-        <ElTable
-          v-loading="loading"
-          height="100%"
-          border
-          class="sm:h-full"
-          :data="data"
-          row-key="id"
-          @selection-change="checkedRowKeys = $event"
-        >
+        <ElTable v-loading="loading" height="100%" border class="sm:h-full" :data="data" row-key="id">
           <ElTableColumn v-for="col in columns" :key="col.prop" v-bind="col" />
         </ElTable>
       </div>
+
       <div class="mt-20px flex justify-end">
         <ElPagination
           v-if="mobilePagination.total"
@@ -183,20 +166,12 @@ function edit(id: number) {
           @size-change="mobilePagination['size-change']"
         />
       </div>
-      <UserOperateDrawer
-        v-model:visible="drawerVisible"
-        :operate-type="operateType"
-        :row-data="editingData"
-        @submitted="getDataByPage"
-      />
+
+      <UserOperateDrawer v-model:visible="drawerVisible" :row-data="editingData" @submitted="getDataByPage" />
+      <UserPasswordModal v-model:visible="passwordModalVisible" :row-data="editingData" @submitted="getData" />
+      <UserErpImportModal v-model:visible="erpImportVisible" @submitted="getDataByPage" />
     </ElCard>
   </div>
 </template>
 
-<style lang="scss" scoped>
-:deep(.el-card) {
-  .ht50 {
-    height: calc(100% - 50px);
-  }
-}
-</style>
+<style scoped></style>

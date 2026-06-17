@@ -614,6 +614,9 @@ declare namespace App {
             menuName: string;
             routeName: string;
             routePath: string;
+            component: string;
+            permission: string;
+            rootMenu: string;
             pathParam: string;
             layout: string;
             page: string;
@@ -637,9 +640,12 @@ declare namespace App {
             form: {
               home: string;
               menuType: string;
+              parentId: string;
               menuName: string;
               routeName: string;
               routePath: string;
+              component: string;
+              permission: string;
               pathParam: string;
               layout: string;
               page: string;
@@ -667,6 +673,7 @@ declare namespace App {
             type: {
               directory: string;
               menu: string;
+              button: string;
             };
             iconType: {
               iconify: string;

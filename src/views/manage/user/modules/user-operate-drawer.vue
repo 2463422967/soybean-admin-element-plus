@@ -1,16 +1,12 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue';
-import { enableStatusOptions, userGenderOptions } from '@/constants/business';
-import { fetchGetAllRoles } from '@/service/api';
+import { fetchGetAllRoles, fetchUpdateUserRoles } from '@/service/api';
 import { useForm, useFormRules } from '@/hooks/common/form';
 import { $t } from '@/locales';
 
 defineOptions({ name: 'UserOperateDrawer' });
 
 interface Props {
-  /** the type of operation */
-  operateType: UI.TableOperateType;
-  /** the edit row data */
   rowData?: Api.SystemManage.User | null;
 }
 
@@ -29,70 +25,54 @@ const visible = defineModel<boolean>('visible', {
 const { formRef, validate, restoreValidation } = useForm();
 const { defaultRequiredRule } = useFormRules();
 
-const title = computed(() => {
-  const titles: Record<UI.TableOperateType, string> = {
-    add: $t('page.manage.user.addUser'),
-    edit: $t('page.manage.user.editUser')
-  };
-  return titles[props.operateType];
-});
+type Model = {
+  userId?: number;
+  code: string;
+  name: string;
+  department: string;
+  roleIds: Api.SystemManage.Id[];
+};
 
-type Model = Pick<
-  Api.SystemManage.User,
-  'userName' | 'userGender' | 'nickName' | 'userPhone' | 'userEmail' | 'userRoles' | 'status'
->;
+const model = ref<Model>(createDefaultModel());
+const roleOptions = ref<CommonType.Option<Api.SystemManage.Id>[]>([]);
 
-const model = ref(createDefaultModel());
+const title = computed(() => '编辑用户角色');
+
+const rules: Partial<Record<keyof Model, App.Global.FormRule>> = {
+  userId: defaultRequiredRule
+};
 
 function createDefaultModel(): Model {
   return {
-    userName: '',
-    userGender: undefined,
-    nickName: '',
-    userPhone: '',
-    userEmail: '',
-    userRoles: [],
-    status: undefined
+    userId: undefined,
+    code: '',
+    name: '',
+    department: '',
+    roleIds: []
   };
 }
-
-type RuleKey = Extract<keyof Model, 'userName' | 'status'>;
-
-const rules: Record<RuleKey, App.Global.FormRule> = {
-  userName: defaultRequiredRule,
-  status: defaultRequiredRule
-};
-
-/** the enabled role options */
-const roleOptions = ref<CommonType.Option<string>[]>([]);
 
 async function getRoleOptions() {
   const { error, data } = await fetchGetAllRoles();
 
   if (!error) {
-    const options = data.map(item => ({
-      label: item.roleName,
-      value: item.roleCode
+    roleOptions.value = data.map(item => ({
+      label: item.name || item.roleName || item.code || item.roleCode,
+      value: item.id
     }));
-
-    // the mock data does not have the roleCode, so fill it
-    // if the real request, remove the following code
-    const userRoleOptions = model.value.userRoles.map(item => ({
-      label: item,
-      value: item
-    }));
-    // end
-
-    roleOptions.value = [...userRoleOptions, ...options];
   }
 }
 
-function handleInitModel() {
-  model.value = createDefaultModel();
+function initModel() {
+  const rowData = props.rowData;
 
-  if (props.operateType === 'edit' && props.rowData) {
-    Object.assign(model.value, props.rowData);
-  }
+  model.value = {
+    userId: rowData?.id,
+    code: rowData?.code || '',
+    name: rowData?.name || '',
+    department: rowData?.department || '',
+    roleIds: rowData?.roleIds ? [...rowData.roleIds] : []
+  };
 }
 
 function closeDrawer() {
@@ -100,53 +80,54 @@ function closeDrawer() {
 }
 
 async function handleSubmit() {
+  if (!model.value.userId) {
+    return;
+  }
+
   await validate();
-  // request
-  window.$message?.success($t('common.updateSuccess'));
-  closeDrawer();
-  emit('submitted');
+
+  const { error } = await fetchUpdateUserRoles({
+    userId: model.value.userId,
+    roleIds: model.value.roleIds
+  });
+
+  if (!error) {
+    window.$message?.success($t('common.updateSuccess'));
+    closeDrawer();
+    emit('submitted');
+  }
 }
 
-watch(visible, () => {
-  if (visible.value) {
-    handleInitModel();
-    restoreValidation();
-    getRoleOptions();
+watch(visible, async newVisible => {
+  if (!newVisible) {
+    return;
   }
+
+  initModel();
+  await restoreValidation();
+  await getRoleOptions();
 });
 </script>
 
 <template>
-  <ElDrawer v-model="visible" :title="title" :size="360">
+  <ElDrawer v-model="visible" :title="title" :size="420">
     <ElForm ref="formRef" :model="model" :rules="rules" label-position="top">
-      <ElFormItem :label="$t('page.manage.user.userName')" prop="userName">
-        <ElInput v-model="model.userName" :placeholder="$t('page.manage.user.form.userName')" />
+      <ElFormItem label="工号">
+        <ElInput :model-value="model.code" disabled />
       </ElFormItem>
-      <ElFormItem :label="$t('page.manage.user.userGender')" prop="userGender">
-        <ElRadioGroup v-model="model.userGender">
-          <ElRadio v-for="item in userGenderOptions" :key="item.value" :value="item.value" :label="$t(item.label)" />
-        </ElRadioGroup>
+      <ElFormItem label="姓名">
+        <ElInput :model-value="model.name" disabled />
       </ElFormItem>
-      <ElFormItem :label="$t('page.manage.user.nickName')" prop="nickName">
-        <ElInput v-model="model.nickName" :placeholder="$t('page.manage.user.form.nickName')" />
+      <ElFormItem label="部门">
+        <ElInput :model-value="model.department" disabled />
       </ElFormItem>
-      <ElFormItem :label="$t('page.manage.user.userPhone')" prop="userPhone">
-        <ElInput v-model="model.userPhone" :placeholder="$t('page.manage.user.form.userPhone')" />
-      </ElFormItem>
-      <ElFormItem :label="$t('page.manage.user.userEmail')" prop="email">
-        <ElInput v-model="model.userEmail" :placeholder="$t('page.manage.user.form.userEmail')" />
-      </ElFormItem>
-      <ElFormItem :label="$t('page.manage.user.userStatus')" prop="status">
-        <ElRadioGroup v-model="model.status">
-          <ElRadio v-for="item in enableStatusOptions" :key="item.value" :value="item.value" :label="$t(item.label)" />
-        </ElRadioGroup>
-      </ElFormItem>
-      <ElFormItem :label="$t('page.manage.user.userRole')" prop="roles">
-        <ElSelect v-model="model.userRoles" multiple :placeholder="$t('page.manage.user.form.userRole')">
+      <ElFormItem label="角色">
+        <ElSelect v-model="model.roleIds" multiple filterable collapse-tags placeholder="请选择角色">
           <ElOption v-for="{ label, value } in roleOptions" :key="value" :label="label" :value="value" />
         </ElSelect>
       </ElFormItem>
     </ElForm>
+
     <template #footer>
       <ElSpace :size="16">
         <ElButton @click="closeDrawer">{{ $t('common.cancel') }}</ElButton>

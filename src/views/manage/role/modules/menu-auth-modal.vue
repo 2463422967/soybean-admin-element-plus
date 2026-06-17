@@ -1,13 +1,12 @@
 <script setup lang="ts">
-import { computed, shallowRef, watch } from 'vue';
-import { fetchGetAllPages, fetchGetMenuTree } from '@/service/api';
+import { computed, nextTick, ref, watch } from 'vue';
+import { fetchGetMenuTree, fetchGetRoleInfo, fetchUpdateRoleMenus } from '@/service/api';
 import { $t } from '@/locales';
 
 defineOptions({ name: 'MenuAuthModal' });
 
 interface Props {
-  /** the roleId */
-  roleId: number;
+  roleId: Api.SystemManage.Id;
 }
 
 const props = defineProps<Props>();
@@ -16,115 +15,101 @@ const visible = defineModel<boolean>('visible', {
   default: false
 });
 
+type TreeInstance = {
+  getCheckedKeys: (leafOnly?: boolean) => Api.SystemManage.Id[];
+  getHalfCheckedKeys: () => Api.SystemManage.Id[];
+  setCheckedKeys: (keys: Api.SystemManage.Id[], leafOnly?: boolean) => void;
+};
+
+const loading = ref(false);
+const submitting = ref(false);
+const treeRef = ref<TreeInstance | null>(null);
+const treeData = ref<Api.SystemManage.MenuTree[]>([]);
+const checkedKeys = ref<Api.SystemManage.Id[]>([]);
+
+const title = computed(() => '菜单权限');
+
+const treeProps = {
+  label: 'title',
+  children: 'children'
+} as const;
+
 function closeModal() {
   visible.value = false;
 }
 
-const title = computed(() => $t('common.edit') + $t('page.manage.role.menuAuth'));
+async function init() {
+  if (!props.roleId) {
+    return;
+  }
 
-const home = shallowRef('');
+  loading.value = true;
 
-async function getHome() {
-  // eslint-disable-next-line no-console
-  console.log(props.roleId);
+  const [{ error: menuError, data: menus }, { error: roleError, data: roleInfo }] = await Promise.all([
+    fetchGetMenuTree(),
+    fetchGetRoleInfo(props.roleId)
+  ]);
 
-  home.value = 'home';
+  loading.value = false;
+
+  if (!menuError) {
+    treeData.value = menus || [];
+  }
+
+  checkedKeys.value = roleError ? [] : roleInfo.menuIds || [];
+
+  await nextTick();
+  treeRef.value?.setCheckedKeys(checkedKeys.value);
 }
 
-const pages = shallowRef<string[]>([]);
+async function handleSubmit() {
+  if (!props.roleId) {
+    return;
+  }
 
-async function getPages() {
-  const { error, data } = await fetchGetAllPages();
+  const currentCheckedKeys = treeRef.value?.getCheckedKeys(false) || checkedKeys.value;
+  const halfCheckedKeys = treeRef.value?.getHalfCheckedKeys() || [];
+  const menuIds = Array.from(new Set([...currentCheckedKeys, ...halfCheckedKeys]));
+
+  submitting.value = true;
+
+  const { error } = await fetchUpdateRoleMenus({
+    roleId: props.roleId,
+    menuIds
+  });
+
+  submitting.value = false;
 
   if (!error) {
-    pages.value = data;
+    window.$message?.success($t('common.updateSuccess'));
+    closeModal();
   }
 }
 
-const pageSelectOptions = computed(() => {
-  const opts: CommonType.Option[] = pages.value.map(page => ({
-    label: page,
-    value: page
-  }));
-
-  return opts;
-});
-
-const tree = shallowRef<Api.SystemManage.MenuTree[]>([]);
-
-async function getTree() {
-  const { error, data } = await fetchGetMenuTree();
-
-  if (!error) {
-    tree.value = data;
-  }
-}
-
-const checks = shallowRef<number[]>([]);
-
-async function getChecks() {
-  // eslint-disable-next-line no-console
-  console.log(props.roleId);
-  // request
-  checks.value = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21];
-}
-
-function checkChange(val: number) {
-  const idx = checks.value.indexOf(val);
-  if (idx === -1) {
-    checks.value.push(val);
-  } else {
-    checks.value.splice(idx, 1);
-  }
-}
-
-function handleSubmit() {
-  // eslint-disable-next-line no-console
-  console.log(checks.value, props.roleId);
-  // request
-
-  window.$message?.success?.($t('common.modifySuccess'));
-
-  closeModal();
-}
-
-function init() {
-  getHome();
-  getPages();
-  getTree();
-  getChecks();
-}
-
-watch(visible, val => {
-  if (val) {
-    init();
+watch(visible, async newVisible => {
+  if (newVisible) {
+    await init();
   }
 });
 </script>
 
 <template>
-  <ElDialog v-model="visible" :title="title" preset="card" class="w-480px">
-    <div class="flex-y-center gap-16px pb-12px">
-      <div>{{ $t('page.manage.menu.home') }}</div>
-      <ElSelect v-model="home" :options="pageSelectOptions" size="small" class="w-160px">
-        <ElOption v-for="{ value, label } in pageSelectOptions" :key="value" :value="value" :label="label"></ElOption>
-      </ElSelect>
-    </div>
+  <ElDialog v-model="visible" :title="title" width="680px">
     <ElTree
-      v-model:checked-keys="checks"
-      :data="tree"
+      ref="treeRef"
+      v-loading="loading"
+      :data="treeData"
+      :props="treeProps"
       node-key="id"
       show-checkbox
-      class="h-280px overflow-y-auto"
-      :default-checked-keys="checks"
-      @check-change="checkChange"
+      default-expand-all
+      class="max-h-520px overflow-y-auto border border-[var(--el-border-color)] rounded-2 p-12px"
     />
+
     <template #footer>
       <ElSpace class="w-full justify-end">
-        <ElButton size="small" class="mt-16px" @click="closeModal">
-          {{ $t('common.cancel') }}
-        </ElButton>
-        <ElButton type="primary" size="small" class="mt-16px" @click="handleSubmit">
+        <ElButton @click="closeModal">{{ $t('common.cancel') }}</ElButton>
+        <ElButton type="primary" :loading="submitting" @click="handleSubmit">
           {{ $t('common.confirm') }}
         </ElButton>
       </ElSpace>
