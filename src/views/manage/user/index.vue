@@ -1,7 +1,9 @@
 <script setup lang="tsx">
 import { ref } from 'vue';
+import { ElPopconfirm, ElSpace } from 'element-plus';
 import { enableStatusRecord } from '@/constants/business';
 import { fetchGetUserList, fetchUpdateUserStatus } from '@/service/api';
+import { useAuth } from '@/hooks/business/auth';
 import { defaultTransform, useUIPaginatedTable } from '@/hooks/common/table';
 import { $t } from '@/locales';
 import UserErpImportModal from './modules/user-erp-import-modal.vue';
@@ -16,6 +18,14 @@ const drawerVisible = ref(false);
 const passwordModalVisible = ref(false);
 const erpImportVisible = ref(false);
 const editingData = ref<Api.SystemManage.User | null>(null);
+const { hasAuth } = useAuth();
+
+const authCodes = {
+  import: 'manage_user:import',
+  updateRole: 'manage_user:update-role',
+  resetPassword: 'manage_user:reset-password',
+  updateStatus: 'manage_user:update-status'
+} as const;
 
 function getInitSearchParams(): Api.SystemManage.UserSearchParams {
   return {
@@ -81,21 +91,27 @@ const { columns, columnChecks, data, getData, getDataByPage, loading, mobilePagi
 
         return (
           <ElSpace>
-            <ElButton type="primary" plain size="small" onClick={() => handleEdit(row)}>
-              编辑角色
-            </ElButton>
-            <ElButton plain size="small" onClick={() => handleResetPassword(row)}>
-              重置密码
-            </ElButton>
-            <ElPopconfirm title={`确认${actionText}该用户吗？`} onConfirm={() => handleUpdateStatus(row, nextStatus)}>
-              {{
-                reference: () => (
-                  <ElButton type={nextStatus === '1' ? 'success' : 'warning'} plain size="small">
-                    {actionText}
-                  </ElButton>
-                )
-              }}
-            </ElPopconfirm>
+            {hasAuth(authCodes.updateRole) ? (
+              <ElButton type="primary" plain size="small" onClick={() => handleEdit(row)}>
+                编辑角色
+              </ElButton>
+            ) : null}
+            {hasAuth(authCodes.resetPassword) ? (
+              <ElButton plain size="small" onClick={() => handleResetPassword(row)}>
+                重置密码
+              </ElButton>
+            ) : null}
+            {hasAuth(authCodes.updateStatus) ? (
+              <ElPopconfirm title={`确认${actionText}该用户吗？`} onConfirm={() => handleUpdateStatus(row, nextStatus)}>
+                {{
+                  reference: () => (
+                    <ElButton type={nextStatus === '1' ? 'success' : 'warning'} plain size="small">
+                      {actionText}
+                    </ElButton>
+                  )
+                }}
+              </ElPopconfirm>
+            ) : null}
           </ElSpace>
         );
       }
@@ -107,17 +123,33 @@ function resetSearchParams() {
   searchParams.value = getInitSearchParams();
 }
 
+function handleImportErpUser() {
+  if (!hasAuth(authCodes.import)) {
+    return;
+  }
+  erpImportVisible.value = true;
+}
+
 function handleEdit(row: Api.SystemManage.User) {
+  if (!hasAuth(authCodes.updateRole)) {
+    return;
+  }
   editingData.value = row;
   drawerVisible.value = true;
 }
 
 function handleResetPassword(row: Api.SystemManage.User) {
+  if (!hasAuth(authCodes.resetPassword)) {
+    return;
+  }
   editingData.value = row;
   passwordModalVisible.value = true;
 }
 
 async function handleUpdateStatus(row: Api.SystemManage.User, status: Api.SystemManage.EnableStatus) {
+  if (!hasAuth(authCodes.updateStatus)) {
+    return;
+  }
   const { error } = await fetchUpdateUserStatus({
     userId: row.id,
     status
@@ -140,7 +172,7 @@ async function handleUpdateStatus(row: Api.SystemManage.User, status: Api.System
           <p>用户管理</p>
           <TableHeaderOperation v-model:columns="columnChecks" :loading="loading" @refresh="getData">
             <template #default>
-              <ElButton type="primary" plain @click="erpImportVisible = true">
+              <ElButton v-if="hasAuth(authCodes.import)" type="primary" plain @click="handleImportErpUser">
                 <template #icon>
                   <icon-mdi-account-arrow-down-outline class="text-icon" />
                 </template>

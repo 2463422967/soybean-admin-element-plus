@@ -3,6 +3,7 @@ import { ref } from 'vue';
 import { useBoolean } from '@sa/hooks';
 import { enableStatusRecord, menuTypeRecord } from '@/constants/business';
 import { fetchDeleteMenu, fetchGetMenuTree } from '@/service/api';
+import { useAuth } from '@/hooks/business/auth';
 import { $t } from '@/locales';
 import SvgIcon from '@/components/custom/svg-icon.vue';
 import MenuOperateModal, { type OperateType } from './modules/menu-operate-modal.vue';
@@ -15,6 +16,13 @@ const loading = ref(false);
 const data = ref<Api.SystemManage.Menu[]>([]);
 const operateType = ref<OperateType>('add');
 const editingData = ref<Api.SystemManage.Menu | null>(null);
+const { hasAuth } = useAuth();
+
+const authCodes = {
+  add: 'manage_menu:add',
+  update: 'manage_menu:update',
+  delete: 'manage_menu:delete'
+} as const;
 
 function getStatusValue(status: Api.SystemManage.Menu['status']) {
   return String(status || '1') as Api.Common.EnableStatus;
@@ -36,24 +44,36 @@ async function getData() {
 }
 
 function handleAdd() {
+  if (!hasAuth(authCodes.add)) {
+    return;
+  }
   operateType.value = 'add';
   editingData.value = null;
   openModal();
 }
 
 function handleAddChildMenu(row: Api.SystemManage.Menu) {
+  if (!hasAuth(authCodes.add)) {
+    return;
+  }
   operateType.value = 'addChild';
   editingData.value = { ...row };
   openModal();
 }
 
 function handleEdit(row: Api.SystemManage.Menu) {
+  if (!hasAuth(authCodes.update)) {
+    return;
+  }
   operateType.value = 'edit';
   editingData.value = { ...row };
   openModal();
 }
 
-async function handleDelete(id: number) {
+async function handleDelete(id: Api.SystemManage.Id) {
+  if (!hasAuth(authCodes.delete)) {
+    return;
+  }
   const { error } = await fetchDeleteMenu(id);
 
   if (!error) {
@@ -82,7 +102,7 @@ init();
               </template>
               {{ $t('common.refresh') }}
             </ElButton>
-            <ElButton type="primary" plain @click="handleAdd">
+            <ElButton v-if="hasAuth(authCodes.add)" type="primary" plain @click="handleAdd">
               <template #icon>
                 <icon-ic-round-plus class="text-icon" />
               </template>
@@ -141,7 +161,7 @@ init();
           <template #default="{ row }">
             <ElSpace>
               <ElButton
-                v-if="getMenuTypeValue(row.type) !== 3"
+                v-if="getMenuTypeValue(row.type) !== 3 && hasAuth(authCodes.add)"
                 type="primary"
                 plain
                 size="small"
@@ -149,10 +169,14 @@ init();
               >
                 {{ $t('page.manage.menu.addChildMenu') }}
               </ElButton>
-              <ElButton type="primary" plain size="small" @click="handleEdit(row)">
+              <ElButton v-if="hasAuth(authCodes.update)" type="primary" plain size="small" @click="handleEdit(row)">
                 {{ $t('common.edit') }}
               </ElButton>
-              <ElPopconfirm :title="$t('common.confirmDelete')" @confirm="handleDelete(row.id)">
+              <ElPopconfirm
+                v-if="hasAuth(authCodes.delete)"
+                :title="$t('common.confirmDelete')"
+                @confirm="handleDelete(row.id)"
+              >
                 <template #reference>
                   <ElButton type="danger" plain size="small" :disabled="row.isSystem">
                     {{ $t('common.delete') }}

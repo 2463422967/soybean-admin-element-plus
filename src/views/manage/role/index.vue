@@ -1,7 +1,9 @@
 <script setup lang="tsx">
 import { ref } from 'vue';
+import { ElPopconfirm, ElSpace } from 'element-plus';
 import { enableStatusRecord } from '@/constants/business';
 import { fetchDeleteRole, fetchGetRoleList } from '@/service/api';
+import { useAuth } from '@/hooks/business/auth';
 import { defaultTransform, useUIPaginatedTable } from '@/hooks/common/table';
 import { $t } from '@/locales';
 import MenuAuthModal from './modules/menu-auth-modal.vue';
@@ -16,6 +18,14 @@ const menuAuthVisible = ref(false);
 const operateType = ref<UI.TableOperateType>('add');
 const editingData = ref<Api.SystemManage.Role | null>(null);
 const currentMenuRoleId = ref<Api.SystemManage.Id>('');
+const { hasAuth } = useAuth();
+
+const authCodes = {
+  add: 'manage_role:add',
+  update: 'manage_role:update',
+  delete: 'manage_role:delete',
+  menu: 'manage_role:menu'
+} as const;
 
 function getInitSearchParams(): Api.SystemManage.RoleSearchParams {
   return {
@@ -69,21 +79,27 @@ const { columns, columnChecks, data, loading, getData, getDataByPage, mobilePagi
       align: 'center',
       formatter: row => (
         <ElSpace>
-          <ElButton type="primary" plain size="small" onClick={() => handleEdit(row)}>
-            {$t('common.edit')}
-          </ElButton>
-          <ElButton plain size="small" onClick={() => openMenuAuth(row)}>
-            菜单权限
-          </ElButton>
-          <ElPopconfirm title={$t('common.confirmDelete')} onConfirm={() => handleDelete(row)}>
-            {{
-              reference: () => (
-                <ElButton type="danger" plain size="small" disabled={row.isSystem}>
-                  {$t('common.delete')}
-                </ElButton>
-              )
-            }}
-          </ElPopconfirm>
+          {hasAuth(authCodes.update) ? (
+            <ElButton type="primary" plain size="small" onClick={() => handleEdit(row)}>
+              {$t('common.edit')}
+            </ElButton>
+          ) : null}
+          {hasAuth(authCodes.menu) ? (
+            <ElButton plain size="small" onClick={() => openMenuAuth(row)}>
+              菜单权限
+            </ElButton>
+          ) : null}
+          {hasAuth(authCodes.delete) ? (
+            <ElPopconfirm title={$t('common.confirmDelete')} onConfirm={() => handleDelete(row)}>
+              {{
+                reference: () => (
+                  <ElButton type="danger" plain size="small" disabled={row.isSystem}>
+                    {$t('common.delete')}
+                  </ElButton>
+                )
+              }}
+            </ElPopconfirm>
+          ) : null}
         </ElSpace>
       )
     }
@@ -95,23 +111,35 @@ function resetSearchParams() {
 }
 
 function handleAdd() {
+  if (!hasAuth(authCodes.add)) {
+    return;
+  }
   operateType.value = 'add';
   editingData.value = null;
   drawerVisible.value = true;
 }
 
 function handleEdit(row: Api.SystemManage.Role) {
+  if (!hasAuth(authCodes.update)) {
+    return;
+  }
   operateType.value = 'edit';
   editingData.value = row;
   drawerVisible.value = true;
 }
 
 function openMenuAuth(row: Api.SystemManage.Role) {
+  if (!hasAuth(authCodes.menu)) {
+    return;
+  }
   currentMenuRoleId.value = row.id;
   menuAuthVisible.value = true;
 }
 
 async function handleDelete(row: Api.SystemManage.Role) {
+  if (!hasAuth(authCodes.delete)) {
+    return;
+  }
   const { error } = await fetchDeleteRole(row.id);
 
   if (!error) {
@@ -131,7 +159,7 @@ async function handleDelete(row: Api.SystemManage.Role) {
           <p>角色管理</p>
           <TableHeaderOperation v-model:columns="columnChecks" :loading="loading" @refresh="getData">
             <template #default>
-              <ElButton type="primary" plain @click="handleAdd">
+              <ElButton v-if="hasAuth(authCodes.add)" type="primary" plain @click="handleAdd">
                 <template #icon>
                   <icon-ic-round-plus class="text-icon" />
                 </template>

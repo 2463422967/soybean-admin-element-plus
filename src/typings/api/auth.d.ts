@@ -9,6 +9,7 @@ declare namespace Api {
       code: string;
       department?: string;
       roleMenu?: string[];
+      buttons?: string[];
       name: string;
       disableFlag?: boolean;
       kbToken: string;

@@ -92,7 +92,7 @@ export const useAuthStore = defineStore(SetupStoreId.Auth, () => {
       userId: loginResult.code,
       userName: loginResult.name || loginResult.code,
       roles: [import.meta.env.VITE_STATIC_SUPER_ROLE],
-      buttons: loginResult.roleMenu || []
+      buttons: loginResult.buttons || []
     };
   }
 
