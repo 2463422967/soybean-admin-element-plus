@@ -12,6 +12,7 @@
 6. 写接口、请求实例、代理或后端响应适配前，读 `docs/agent-guides/soybean-request.md`。
 7. 使用 Soybean CLI、路由生成或 Git hooks 前，读 `docs/agent-guides/soybean-cli.md`。
 8. 写列表、分页表格、列显隐或增删改查表格状态前，读 `docs/agent-guides/soybean-table-hooks.md`。
+9. 从旧 WMS 前端迁移业务页面、字段、接口或打印工具页前，读 `docs/agent-guides/wms-page-migration.md`。
 
 ## 手册范围
 
@@ -19,6 +20,14 @@
 - 不在本目录记录任务计划、权限绕行策略或一次性项目目标。
 - 项目阶段性决策应单独放到 `docs/decisions/` 或任务设计文档中。
 - 本项目优先遵循 Soybean 既有技术栈：Vue 3、TypeScript、Vite/rolldown-vite、Element Plus、Pinia、UnoCSS、Iconify、Elegant Router。
+
+## WMS 页面迁移规则
+
+- 旧前端只作为字段、接口、业务含义和特殊数据格式的来源，不迁移旧样式、旧路由路径或旧页面布局。
+- 新页面优先套用 Soybean/Element Plus 现有列表、搜索、表格、打印和图标模式。
+- 列表页优先落到嵌套业务目录，搜索组件、预览组件、模板配置等拆到页面内 `modules/`。
+- 权限、动态路由和登录鉴权不是页面迁移的前置条件；页面可先按本地静态路由和已确认后端响应结构接入。
+- 旧前端存在特殊编码、二维码内容、打印内容或接口字段映射时，必须在迁移页中保持业务数据格式一致。
 
 ## 常用命令
 

@@ -347,6 +347,104 @@ export const generatedRoutes: GeneratedRoute[] = [
     }
   },
   {
+    name: 'inbound-manage',
+    path: '/inbound-manage',
+    component: 'layout.base',
+    meta: {
+      title: '入库管理',
+      icon: 'mdi:archive-arrow-down-outline',
+      order: 3,
+      i18nKey: 'route.inbound-manage'
+    },
+    children: [
+      {
+        name: 'inbound-manage_inbound-operation',
+        path: '/inbound-manage/inbound-operation',
+        component: 'view.inbound-manage_inbound-operation',
+        meta: {
+          title: '入库作业',
+          icon: 'mdi:truck-delivery-outline',
+          order: 3,
+          keepAlive: true,
+          i18nKey: 'route.inbound-manage_inbound-operation'
+        }
+      },
+      {
+        name: 'inbound-manage_procurement-receiving',
+        path: '/inbound-manage/procurement-receiving',
+        component: 'view.inbound-manage_procurement-receiving',
+        meta: {
+          title: '收货作业',
+          icon: 'mdi:clipboard-check-outline',
+          order: 1,
+          keepAlive: true,
+          i18nKey: 'route.inbound-manage_procurement-receiving'
+        }
+      },
+      {
+        name: 'inbound-manage_putaway-operation',
+        path: '/inbound-manage/putaway-operation',
+        component: 'view.inbound-manage_putaway-operation',
+        meta: {
+          title: '上架作业',
+          icon: 'mdi:archive-arrow-up-outline',
+          order: 2,
+          keepAlive: true,
+          i18nKey: 'route.inbound-manage_putaway-operation'
+        }
+      }
+    ]
+  },
+  {
+    name: 'internal-manage',
+    path: '/internal-manage',
+    component: 'layout.base',
+    meta: {
+      title: '库内管理',
+      icon: 'mdi:swap-horizontal-bold',
+      order: 5,
+      i18nKey: 'route.internal-manage'
+    },
+    children: [
+      {
+        name: 'internal-manage_location-movement',
+        path: '/internal-manage/location-movement',
+        component: 'view.internal-manage_location-movement',
+        meta: {
+          title: '仓位移动作业',
+          icon: 'mdi:map-marker-path',
+          order: 2,
+          keepAlive: true,
+          i18nKey: 'route.internal-manage_location-movement'
+        }
+      },
+      {
+        name: 'internal-manage_warehouse-transfer',
+        path: '/internal-manage/warehouse-transfer',
+        component: 'view.internal-manage_warehouse-transfer',
+        meta: {
+          title: '仓库调拨作业',
+          icon: 'mdi:warehouse',
+          order: 1,
+          keepAlive: true,
+          i18nKey: 'route.internal-manage_warehouse-transfer'
+        }
+      }
+    ]
+  },
+  {
+    name: 'inventory-manage',
+    path: '/inventory-manage',
+    component: 'layout.base$view.inventory-manage',
+    meta: {
+      title: '库存管理',
+      icon: 'mdi:database-search-outline',
+      order: 6,
+      keepAlive: true,
+      i18nKey: 'route.inventory-manage'
+    }
+  },
+  {
     name: 'login',
     path: '/login/:module(pwd-login|code-login|register|reset-pwd|bind-wechat)?',
     component: 'layout.blank$view.login',
@@ -481,6 +579,31 @@ export const generatedRoutes: GeneratedRoute[] = [
             ]
           }
         ]
+      }
+    ]
+  },
+  {
+    name: 'outbound-manage',
+    path: '/outbound-manage',
+    component: 'layout.base',
+    meta: {
+      title: '出库管理',
+      icon: 'mdi:archive-arrow-up-outline',
+      order: 4,
+      i18nKey: 'route.outbound-manage'
+    },
+    children: [
+      {
+        name: 'outbound-manage_sales-outbound',
+        path: '/outbound-manage/sales-outbound',
+        component: 'view.outbound-manage_sales-outbound',
+        meta: {
+          title: '拣货作业',
+          icon: 'mdi:cart-arrow-up',
+          order: 1,
+          keepAlive: true,
+          i18nKey: 'route.outbound-manage_sales-outbound'
+        }
       }
     ]
   },
@@ -740,6 +863,18 @@ export const generatedRoutes: GeneratedRoute[] = [
       title: 'user-center',
       i18nKey: 'route.user-center',
       hideInMenu: true
+    }
+  },
+  {
+    name: 'warehouse-inventory',
+    path: '/warehouse-inventory',
+    component: 'layout.base$view.warehouse-inventory',
+    meta: {
+      title: '库存盘点',
+      icon: 'mdi:clipboard-list-outline',
+      order: 7,
+      keepAlive: true,
+      i18nKey: 'route.warehouse-inventory'
     }
   }
 ];

@@ -206,6 +206,14 @@ const routeMap: RouteMap = {
   "function_toggle-auth": "/function/toggle-auth",
   "home": "/home",
   "iframe-page": "/iframe-page/:url",
+  "inbound-manage": "/inbound-manage",
+  "inbound-manage_inbound-operation": "/inbound-manage/inbound-operation",
+  "inbound-manage_procurement-receiving": "/inbound-manage/procurement-receiving",
+  "inbound-manage_putaway-operation": "/inbound-manage/putaway-operation",
+  "internal-manage": "/internal-manage",
+  "internal-manage_location-movement": "/internal-manage/location-movement",
+  "internal-manage_warehouse-transfer": "/internal-manage/warehouse-transfer",
+  "inventory-manage": "/inventory-manage",
   "login": "/login/:module(pwd-login|code-login|register|reset-pwd|bind-wechat)?",
   "manage": "/manage",
   "manage_menu": "/manage/menu",
@@ -218,6 +226,8 @@ const routeMap: RouteMap = {
   "multi-menu_second": "/multi-menu/second",
   "multi-menu_second_child": "/multi-menu/second/child",
   "multi-menu_second_child_home": "/multi-menu/second/child/home",
+  "outbound-manage": "/outbound-manage",
+  "outbound-manage_sales-outbound": "/outbound-manage/sales-outbound",
   "plugin": "/plugin",
   "plugin_barcode": "/plugin/barcode",
   "plugin_charts": "/plugin/charts",
@@ -242,7 +252,8 @@ const routeMap: RouteMap = {
   "plugin_tables_vtable": "/plugin/tables/vtable",
   "plugin_typeit": "/plugin/typeit",
   "plugin_video": "/plugin/video",
-  "user-center": "/user-center"
+  "user-center": "/user-center",
+  "warehouse-inventory": "/warehouse-inventory"
 };
 
 /**

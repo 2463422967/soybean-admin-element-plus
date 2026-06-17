@@ -60,6 +60,14 @@ declare module "@elegant-router/types" {
     "function_toggle-auth": "/function/toggle-auth";
     "home": "/home";
     "iframe-page": "/iframe-page/:url";
+    "inbound-manage": "/inbound-manage";
+    "inbound-manage_inbound-operation": "/inbound-manage/inbound-operation";
+    "inbound-manage_procurement-receiving": "/inbound-manage/procurement-receiving";
+    "inbound-manage_putaway-operation": "/inbound-manage/putaway-operation";
+    "internal-manage": "/internal-manage";
+    "internal-manage_location-movement": "/internal-manage/location-movement";
+    "internal-manage_warehouse-transfer": "/internal-manage/warehouse-transfer";
+    "inventory-manage": "/inventory-manage";
     "login": "/login/:module(pwd-login|code-login|register|reset-pwd|bind-wechat)?";
     "manage": "/manage";
     "manage_menu": "/manage/menu";
@@ -72,6 +80,8 @@ declare module "@elegant-router/types" {
     "multi-menu_second": "/multi-menu/second";
     "multi-menu_second_child": "/multi-menu/second/child";
     "multi-menu_second_child_home": "/multi-menu/second/child/home";
+    "outbound-manage": "/outbound-manage";
+    "outbound-manage_sales-outbound": "/outbound-manage/sales-outbound";
     "plugin": "/plugin";
     "plugin_barcode": "/plugin/barcode";
     "plugin_charts": "/plugin/charts";
@@ -97,6 +107,7 @@ declare module "@elegant-router/types" {
     "plugin_typeit": "/plugin/typeit";
     "plugin_video": "/plugin/video";
     "user-center": "/user-center";
+    "warehouse-inventory": "/warehouse-inventory";
   };
 
   /**
@@ -151,11 +162,16 @@ declare module "@elegant-router/types" {
     | "function"
     | "home"
     | "iframe-page"
+    | "inbound-manage"
+    | "internal-manage"
+    | "inventory-manage"
     | "login"
     | "manage"
     | "multi-menu"
+    | "outbound-manage"
     | "plugin"
     | "user-center"
+    | "warehouse-inventory"
   >;
 
   /**
@@ -200,12 +216,19 @@ declare module "@elegant-router/types" {
     | "function_tab"
     | "function_toggle-auth"
     | "home"
+    | "inbound-manage_inbound-operation"
+    | "inbound-manage_procurement-receiving"
+    | "inbound-manage_putaway-operation"
+    | "internal-manage_location-movement"
+    | "internal-manage_warehouse-transfer"
+    | "inventory-manage"
     | "manage_menu"
     | "manage_role"
     | "manage_user-detail"
     | "manage_user"
     | "multi-menu_first_child"
     | "multi-menu_second_child_home"
+    | "outbound-manage_sales-outbound"
     | "plugin_barcode"
     | "plugin_charts_antv"
     | "plugin_charts_echarts"
@@ -226,6 +249,7 @@ declare module "@elegant-router/types" {
     | "plugin_typeit"
     | "plugin_video"
     | "user-center"
+    | "warehouse-inventory"
   >;
 
   /**

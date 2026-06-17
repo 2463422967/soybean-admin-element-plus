@@ -186,4 +186,274 @@ declare namespace Wms {
       i: string;
     }
   }
+
+  namespace Inventory {
+    interface SearchParams {
+      current: number;
+      size: number;
+      keyWords?: string;
+      materialCode?: string;
+      stockNumber?: string;
+      positionName?: string;
+      flot?: string;
+    }
+
+    interface InventoryItem {
+      materialCode: string;
+      materialName: string;
+      flot?: string;
+      stockName?: string;
+      positionName?: string;
+      unit?: string;
+      stockQty?: number;
+      safeQty?: number;
+      status?: string;
+    }
+
+    interface WarningItem extends InventoryItem {
+      maxQty?: number;
+    }
+
+    type InventoryList = Api.Common.PaginatingQueryRecord<InventoryItem>;
+
+    type WarningList = Api.Common.PaginatingQueryRecord<WarningItem>;
+  }
+
+  namespace ListingAssignment {
+    interface SearchParams {
+      current: number;
+      size: number;
+      keyWords?: string;
+    }
+
+    interface Item {
+      entryId: number;
+      taskNo: string;
+      receiveType: string;
+      materialCode: string;
+      materialName: string;
+      waitQty: number;
+      listingQty?: number;
+      batchNo: string;
+      warehouse: string;
+      warehouseLocation: string;
+      receiveStatus: string;
+      listingPerson?: string;
+      billDate?: string;
+    }
+
+    type ItemList = Api.Common.PaginatingQueryRecord<Item>;
+  }
+
+  namespace InStore {
+    type InStoreType =
+      | 'procurement'
+      | 'production'
+      | 'sales_return'
+      | 'production_return'
+      | 'outsourcing_return'
+      | 'other_in'
+      | 'other_out';
+
+    interface SearchParams {
+      current: number;
+      size: number;
+      keyWords?: string;
+    }
+
+    interface Item {
+      entryId: number;
+      taskNo: string;
+      inStoreType: string;
+      materialCode: string;
+      materialName: string;
+      qty: number;
+      batchNo: string;
+      warehouse: string;
+      warehouseLocation: string;
+      inStoreTime?: string;
+      purchaseOrderNo?: string;
+      supplierName?: string;
+      saleOrderNo?: string;
+      customerName?: string;
+      productionOrderNo?: string;
+      outboundNo?: string;
+    }
+
+    type ItemList = Api.Common.PaginatingQueryRecord<Item>;
+  }
+
+  namespace Receiving {
+    type ReceiveType =
+      | 'procurement'
+      | 'production'
+      | 'sales_return'
+      | 'production_return'
+      | 'outsourcing_return'
+      | 'other_return';
+
+    type ListTab = 'unReceive' | 'recent';
+
+    interface SearchParams {
+      current: number;
+      size: number;
+      receiptNoticeNo?: string;
+    }
+
+    interface Item {
+      entryId?: number;
+      taskNo?: string;
+      receiveType?: string;
+      materialCode?: string;
+      materialName?: string;
+      receiveQty?: number;
+      waitQty?: number;
+      batchNo?: string;
+      warehouse?: string;
+      warehouseLocation?: string;
+      receiveStatus?: string;
+      purchaseOrderNo?: string;
+      supplierName?: string;
+      productionOrderNo?: string;
+      saleOrderNo?: string;
+      customerNo?: string;
+      customerCode?: string;
+      workshopName?: string;
+      orderNo?: string;
+      receiptQty?: number;
+      location?: string;
+      receiver?: string;
+      receiptTime?: string;
+      receivePerson?: string;
+      receiveTime?: string;
+      productionDate?: string;
+      printStatus?: string;
+      status?: string;
+      workOrderBatchNo?: string;
+      outsourceOrderNo?: string;
+      outStoreNo?: string;
+    }
+
+    type ItemList = Api.Common.PaginatingQueryRecord<Item>;
+  }
+
+  namespace Outbound {
+    type OutboundType =
+      | 'sales'
+      | 'purchase_return'
+      | 'production_picking'
+      | 'production_supplement'
+      | 'subcontract_picking'
+      | 'subcontract_supplement'
+      | 'other';
+
+    type ListTab = 'pendingTasks' | 'recentRecords';
+
+    interface SearchParams {
+      current: number;
+      size: number;
+      taskId?: string;
+      keyWords?: string;
+      itCompleted?: boolean;
+    }
+
+    interface Item {
+      id?: number;
+      entryId?: string;
+      taskNo?: string;
+      billNo?: string;
+      saleOrderNo?: string;
+      saleNo?: string;
+      customer?: string;
+      supplier?: string;
+      orderNo?: string;
+      materialCode?: string;
+      materialName?: string;
+      qty?: number;
+      waitQty?: number;
+      pickQty?: number;
+      pickStatus?: number | string;
+      stockName?: string;
+      positionName?: string;
+      warehouse?: string;
+      position?: string;
+      batchNo?: string;
+      flot?: string;
+      orderNo?: string;
+      pickPerson?: string;
+      pickTime?: string;
+    }
+
+    type ItemList = Api.Common.PaginatingQueryRecord<Item>;
+  }
+
+  namespace Transfer {
+    interface SearchParams {
+      current: number;
+      size: number;
+      billNo?: string;
+      sourceStock?: string;
+      targetStock?: string;
+      status?: string;
+      startDate?: string;
+      endDate?: string;
+      stock?: 'A' | 'B';
+    }
+
+    interface Item {
+      fid?: number;
+      billNo: string;
+      materialCode?: string;
+      materialName?: string;
+      qty: number;
+      flot?: string;
+      sourceStockName?: string;
+      sourcePositionName?: string;
+      targetStockName?: string;
+      targetPositionName?: string;
+      createDate: string;
+      status: string;
+    }
+
+    type ItemList = Api.Common.PaginatingQueryRecord<Item>;
+  }
+
+  namespace StockCount {
+    interface HeaderSearchParams {
+      current: number;
+      size: number;
+      fid: number;
+    }
+
+    interface BodySearchParams {
+      current: number;
+      size: number;
+      fid: number;
+    }
+
+    interface Header {
+      fid?: number;
+      billNo?: string;
+      backUpDate?: string;
+      status?: string;
+    }
+
+    interface Body {
+      stock?: string;
+      position?: string;
+      materialCode?: string;
+      materialName?: string;
+      materialSpec?: string;
+      batchNo?: string;
+      unit?: string;
+      baseAcctQty?: number;
+      accountQty?: number;
+      egaingQty?: number;
+      lossQty?: number;
+    }
+
+    type HeaderList = Api.Common.PaginatingQueryRecord<Header>;
+
+    type BodyList = Api.Common.PaginatingQueryRecord<Body>;
+  }
 }
