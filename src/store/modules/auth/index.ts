@@ -140,7 +140,7 @@ export const useAuthStore = defineStore(SetupStoreId.Auth, () => {
     localStg.set('token', loginResult.kbToken);
     localStg.set('refreshToken', loginResult.kbToken);
 
-    // 2. map current backend login response to Soybean auth user info
+    // 2. map current backend login response to front-end auth user info
     const info = mapLoginResultToUserInfo(loginResult);
     localStg.set('authUserInfo', info);
     Object.assign(userInfo, info);

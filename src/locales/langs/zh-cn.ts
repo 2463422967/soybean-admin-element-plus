@@ -1,6 +1,6 @@
 const local: App.I18n.Schema = {
   system: {
-    title: 'Soybean 管理系统',
+    title: '赞伯WMS系统',
     updateTitle: '系统版本更新通知',
     updateContent: '检测到系统有新版本发布，是否立即刷新页面？',
     updateConfirm: '立即刷新',
@@ -301,7 +301,7 @@ const local: App.I18n.Schema = {
     },
     about: {
       title: '关于',
-      introduction: `SoybeanAdmin 是一个优雅且功能强大的后台管理模板，基于最新的前端技术栈，包括 Vue3, Vite5, TypeScript, Pinia 和 UnoCSS。它内置了丰富的主题配置和组件，代码规范严谨，实现了自动化的文件路由系统。此外，它还采用了基于 ApiFox 的在线Mock数据方案。SoybeanAdmin 为您提供了一站式的后台管理解决方案，无需额外配置，开箱即用。同样是一个快速学习前沿技术的最佳实践。`,
+      introduction: `赞伯WMS系统是一套面向制造企业仓储业务的管理系统，基于 Vue3、TypeScript、Pinia 和 UnoCSS 构建。系统围绕仓库、库位、物料、出入库、库存预警和报表分析等场景提供统一的前端管理体验，帮助业务人员更高效地完成仓储作业与数据查看。`,
       projectInfo: {
         title: '项目信息',
         version: '版本',
@@ -333,11 +333,11 @@ const local: App.I18n.Schema = {
       projectNews: {
         title: '项目动态',
         moreNews: '更多动态',
-        desc1: 'Soybean 在2021年5月28日创建了开源项目 soybean-admin!',
-        desc2: 'Yanbowe 向 soybean-admin 提交了一个bug，多标签栏不会自适应。',
-        desc3: 'Soybean 准备为 soybean-admin 的发布做充分的准备工作!',
-        desc4: 'Soybean 正在忙于为soybean-admin写项目说明文档！',
-        desc5: 'Soybean 刚才把工作台页面随便写了一些，凑合能看了！'
+        desc1: '赞伯WMS系统完成仓库基础资料页面建设。',
+        desc2: '赞伯WMS系统优化了库存查询与预警数据展示。',
+        desc3: '赞伯WMS系统正在完善出入库作业流程。',
+        desc4: '赞伯WMS系统补充了报表分析模块的数据看板。',
+        desc5: '赞伯WMS系统持续优化工作台体验。'
       },
       creativity: '创意'
     },

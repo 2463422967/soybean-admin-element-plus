@@ -5,7 +5,7 @@ import type { Options } from 'jsbarcode';
 
 defineOptions({ name: 'BarcodePage' });
 
-const text = 'Soybean';
+const text = 'ZanboWMS';
 
 interface CodeConfig {
   id: string;

@@ -6,13 +6,7 @@ defineOptions({
 
 <template>
   <DarkModeContainer class="h-full flex-center">
-    <a
-      href="https://github.com/soybeanjs/soybean-admin-elp/blob/main/LICENSE"
-      target="_blank"
-      rel="noopener noreferrer"
-    >
-      Copyright MIT © 2021 Soybean
-    </a>
+    <span>Copyright © 2026 赞伯WMS系统</span>
   </DarkModeContainer>
 </template>
 

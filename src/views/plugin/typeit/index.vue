@@ -12,7 +12,7 @@ function init() {
   if (!textRef.value) return;
 
   const options: Options = {
-    strings: 'SoybeanAdmin是一个清新优雅、高颜值且功能强大的后台管理模板',
+    strings: '赞伯WMS系统是一套面向制造企业仓储业务的管理系统',
     lifeLike: true,
     speed: 120,
     loop: true

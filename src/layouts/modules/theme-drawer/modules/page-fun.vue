@@ -118,7 +118,7 @@ const isWrapperScrollMode = computed(() => themeStore.layout.scrollMode === 'wra
         type="text"
         size="small"
         class="w-120px"
-        placeholder="SoybeanAdmin"
+        placeholder="赞伯WMS系统"
       />
     </SettingItem>
     <SettingItem key="9" :label="$t('theme.header.multilingual.visible')">

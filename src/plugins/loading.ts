@@ -61,148 +61,15 @@ function getLogoSvg() {
   const logoSvg = `<svg
         width="100%"
         height="100%"
-        version="1.1"
-        viewBox="0 0 1000 1000"
+        viewBox="0 0 5088 5071"
         xmlns="http://www.w3.org/2000/svg"
-        xmlns:xlink="http://www.w3.org/1999/xlink"
       >
-        <g>
-          <path
-            d="M 200,866 C 100,866 50,779.4 100,692.8 L 200,519.6 C 220,485 240,490 265,499.6 S 360,542.68 360,542.68 C 480.5,601 498,642.5 500,720 C 498,811 462,856 420,866"
-            fill="url(#LinearGradient)"
-            fill-rule="nonzero"
-            opacity="1"
-            stroke="none"
-          />
-          <path
-            d="M 420,866 C 455,861 478,846 500,827 C 614,696 615,597 500,517 C 394,444 333,374 380,207.82 L 260,415.67 C 240.22,450 254.37,465.1 275.28,481.79 S 360,542.68 360,542.68 C 480.5,601 498,642.5 500,720 C 498,811 462,856 420,866"
-            fill="url(#LinearGradient_2)"
-            fill-rule="nonzero"
-            opacity="1"
-            stroke="none"
-          />
-          <path
-            d="M 500,517 C 394,444 333,374 380,207.82 L 400,173.2 C 367,295 421,350 603,428 C 572,440 524,474 500,517"
-            fill="url(#LinearGradient_3)"
-            fill-rule="nonzero"
-            opacity="1"
-            stroke="none"
-          />
-          <path
-            d="M 500,827 L 660,660 C 738,589 710,482 603,428 C 572,440 524,474 500,517 C 615,597 614,696 500,827"
-            fill="url(#LinearGradient_4)"
-            fill-rule="nonzero"
-            opacity="1"
-            stroke="none"
-          />
-          <path
-            d="M 400,173.2 C 367,295 421,350 603,428 C 690,389, 750,445 788,500 L 600,173.2 C 550,86.6 450,86.6 400,173.2"
-            fill="url(#LinearGradient_5)"
-            fill-rule="nonzero"
-            opacity="1"
-            stroke="none"
-          />
-          <path
-            d="M 500,827 L 660,660 C 738,589 710,482 603,428 C 690,389, 750,445 788,500 C 816,554 797,606 750,640 L 500,827"
-            fill="url(#LinearGradient_6)"
-            fill-rule="nonzero"
-            opacity="1"
-            stroke="none"
-          />
-          <path
-            d="M 788,500 C 816,554 797,606 750,640 L 500,827 C 497,851 513,862 540,866 L 800,866 C 900,866 950,779.4 900,692.8 L 788,500"
-            fill="url(#LinearGradient_7)"
-            fill-rule="nonzero"
-            opacity="1"
-            stroke="none"
-          />
+        <g transform="translate(0.000000,5071.000000) scale(0.100000,-0.100000)" fill="#005aa8" stroke="none">
+          <path d="M20650 44594 c-2610 -2598 -4860 -4839 -5000 -4979 l-255 -255 10005 0 10005 0 -2490 2487 c-4500 4495 -7273 7257 -7433 7406 -40 37 -76 67 -80 66 -4 0 -2142 -2126 -4752 -4725z"/>
+          <path d="M11075 35062 c-577 -577 -2123 -2116 -3435 -3422 -1312 -1306 -2972 -2959 -3690 -3675 -718 -715 -1443 -1438 -1612 -1605 l-307 -305 4914 -4919 4913 -4920 344 330 c188 182 3603 3453 7588 7269 3985 3817 7506 7189 7825 7495 319 306 1552 1487 2740 2624 1188 1138 2185 2093 2215 2122 l55 54 -10250 0 -10250 0 -1050 -1048z"/>
+          <path d="M28794 26143 l-9911 -9918 10016 -3 10016 -2 1575 1577 c867 868 3073 3077 4903 4909 1830 1833 3327 3336 3327 3340 0 8 -6772 6781 -9170 9172 l-846 843 -9910 -9918z"/>
+          <path d="M15430 12650 c0 -3 2241 -2246 4980 -4985 l4981 -4981 4562 4566 c2510 2511 4748 4752 4975 4980 l411 415 -127 2 c-256 5 -19782 8 -19782 3z"/>
         </g>
-        <defs>
-          <linearGradient
-            id="LinearGradient"
-            gradientTransform="matrix(104.391 -73.3432 73.3432 104.391 277.441 710.122)"
-            gradientUnits="userSpaceOnUse"
-            x1="0"
-            x2="1"
-            y1="0"
-            y2="0"
-          >
-            <stop offset="0" stop-color="var(--logo-color-700)" />
-            <stop offset="1" stop-color="var(--logo-color-600)" />
-          </linearGradient>
-          <linearGradient
-            id="LinearGradient_2"
-            gradientTransform="matrix(-173.747 557.324 -557.324 -173.747 508.829 258.172)"
-            gradientUnits="userSpaceOnUse"
-            x1="0"
-            x2="1"
-            y1="0"
-            y2="0"
-          >
-            <stop offset="0" stop-color="var(--logo-color-300)" />
-            <stop offset="1" stop-color="var(--logo-color-500)" />
-          </linearGradient>
-          <linearGradient
-            id="LinearGradient_3"
-            gradientTransform="matrix(157.951 295.666 -295.666 157.951 382.944 193.642)"
-            gradientUnits="userSpaceOnUse"
-            x1="0"
-            x2="1"
-            y1="0"
-            y2="0"
-          >
-            <stop offset="0" stop-color="var(--logo-color-600)" />
-            <stop offset="1" stop-color="var(--logo-color-700)" />
-          </linearGradient>
-          <linearGradient
-            id="LinearGradient_4"
-            gradientTransform="matrix(-44.3023 219.578 -219.578 -44.3023 619.69 469.652)"
-            gradientUnits="userSpaceOnUse"
-            x1="0"
-            x2="1"
-            y1="0"
-            y2="0"
-          >
-            <stop offset="0" stop-color="var(--logo-color-400)" />
-            <stop offset="1" stop-color="var(--logo-color-600)" />
-          </linearGradient>
-          <linearGradient
-            id="LinearGradient_5"
-            gradientTransform="matrix(125.52 334.256 -334.256 125.52 539.723 235.139)"
-            gradientUnits="userSpaceOnUse"
-            x1="0"
-            x2="1"
-            y1="0"
-            y2="0"
-          >
-            <stop offset="0" stop-color="var(--logo-color-500)" />
-            <stop offset="1" stop-color="var(--logo-color-300)" />
-          </linearGradient>
-          <linearGradient
-            id="LinearGradient_6"
-            gradientTransform="matrix(-241.23 357.206 -357.206 -241.23 754.054 449.312)"
-            gradientUnits="userSpaceOnUse"
-            x1="0"
-            x2="1"
-            y1="0"
-            y2="0"
-          >
-            <stop offset="0" stop-color="var(--logo-color-300)" />
-            <stop offset="1" stop-color="var(--logo-color-500)" />
-          </linearGradient>
-          <linearGradient
-            id="LinearGradient_7"
-            gradientTransform="matrix(125.978 210.065 -210.065 125.978 596.433 613.665)"
-            gradientUnits="userSpaceOnUse"
-            x1="0"
-            x2="1"
-            y1="0"
-            y2="0"
-          >
-            <stop offset="0" stop-color="var(--logo-color-700)" />
-            <stop offset="1" stop-color="var(--logo-color-600)" />
-          </linearGradient>
-        </defs>
       </svg>
   `;
 
