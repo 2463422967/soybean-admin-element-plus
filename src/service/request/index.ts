@@ -27,7 +27,8 @@ export const request = createFlatRequest(
     },
     async onRequest(config) {
       const Authorization = getAuthorization();
-      Object.assign(config.headers, { Authorization });
+      const kbToken = localStg.get('token');
+      Object.assign(config.headers, { Authorization, 'kb-token': kbToken });
 
       return config;
     },

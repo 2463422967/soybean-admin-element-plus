@@ -187,6 +187,7 @@ const routeMap: RouteMap = {
   "alova_user": "/alova/user",
   "basic-manage": "/basic-manage",
   "basic-manage_app-version-management": "/basic-manage/app-version-management",
+  "basic-manage_label-design": "/basic-manage/label-design",
   "basic-manage_label-management": "/basic-manage/label-management",
   "basic-manage_location-management": "/basic-manage/location-management",
   "basic-manage_material-management": "/basic-manage/material-management",

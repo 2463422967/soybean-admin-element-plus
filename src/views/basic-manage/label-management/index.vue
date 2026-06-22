@@ -1,7 +1,9 @@
 <script setup lang="ts">
 import { computed, nextTick, onMounted, reactive, ref, watch } from 'vue';
 import printJS from 'print-js';
+import { defaultElementTypeProvider as DefaultElementTypeProvider, disAutoConnect, hiprint } from 'vue-plugin-hiprint';
 import {
+  fetchGetDefaultLabelTemplate,
   fetchGetErpUserList,
   fetchGetMaterialInfo,
   fetchGetProductionList,
@@ -9,6 +11,7 @@ import {
   fetchGetSupplierList
 } from '@/service/api';
 import { labelPrintStyle } from './modules/label-print';
+import { buildLabelQrText } from './modules/label-qrcode';
 import { getLabelTemplate, labelTemplates } from './modules/label-templates';
 import LabelPreview from './modules/label-preview.vue';
 
@@ -197,7 +200,27 @@ function handleSelectChange(value: string, field: Wms.Label.FieldConfig) {
   }
 }
 
-async function printLabels() {
+function consumeAfterPrintCallback() {
+  const callback = afterPrintCallback.value;
+  afterPrintCallback.value = null;
+  callback?.();
+}
+
+function buildHiprintPrintData() {
+  const data: Record<string, unknown> = {};
+
+  currentTemplate.value.printFields.forEach(field => {
+    data[field.prop] = formData[field.prop] ?? '';
+  });
+
+  data.text = currentTemplate.value.label;
+  data.barcode = formData.materialCode || formData.batchCode || '';
+  data.qrcode = buildLabelQrText(formData);
+
+  return data;
+}
+
+async function printStaticLabels() {
   await nextTick();
 
   printJS({
@@ -206,12 +229,45 @@ async function printLabels() {
     scanStyles: true,
     targetStyles: ['*'],
     style: labelPrintStyle,
-    onPrintDialogClose: () => {
-      const callback = afterPrintCallback.value;
-      afterPrintCallback.value = null;
-      callback?.();
-    }
+    onPrintDialogClose: consumeAfterPrintCallback
   });
+}
+
+async function printByHiprint(template: Wms.Label.TemplateEntity) {
+  disAutoConnect();
+  hiprint.init({
+    providers: [new DefaultElementTypeProvider()]
+  });
+
+  const printData = printCopyItems.value.map(() => buildHiprintPrintData());
+  const printTemplate = new hiprint.PrintTemplate({
+    template: template.templateJson,
+    dataMode: 1
+  });
+
+  window.addEventListener('afterprint', consumeAfterPrintCallback, { once: true });
+  printTemplate.print(
+    printData,
+    {},
+    {
+      styleHandler: () => '<link rel="stylesheet" type="text/css" media="print" href="/print-lock.css" />'
+    }
+  );
+}
+
+async function printLabels() {
+  try {
+    const { data: template, error } = await fetchGetDefaultLabelTemplate(selectedTemplateKey.value);
+
+    if (!error && template?.templateJson) {
+      await printByHiprint(template);
+      return;
+    }
+  } catch {
+    window.$message?.warning('未读取到可用设计模板，已使用系统默认标签预览打印');
+  }
+
+  await printStaticLabels();
 }
 
 async function setTemplateAndData(options: Wms.Label.ExternalTemplateData) {

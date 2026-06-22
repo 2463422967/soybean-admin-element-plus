@@ -2,6 +2,7 @@ export * from './auth';
 export * from './route';
 export * from './system-manage';
 export * from './base-info';
+export * from './label-template';
 export * from './inventory';
 export * from './listing-assignment';
 export * from './in-store';

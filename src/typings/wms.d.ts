@@ -160,6 +160,46 @@ declare namespace Wms {
       printFields: FieldConfig[];
     }
 
+    interface TemplateEntity {
+      id: number;
+      templateCode: string;
+      templateName: string;
+      businessType: TemplateKey;
+      paperWidth: number;
+      paperHeight: number;
+      templateJson: Record<string, unknown>;
+      enabled: boolean;
+      defaultTemplate: boolean;
+      remark?: string;
+      createTime?: string;
+      updateTime?: string;
+    }
+
+    interface TemplateSearchParams extends Api.Common.CommonSearchParams {
+      businessType?: TemplateKey;
+      enabled?: boolean;
+    }
+
+    type TemplateList = Api.Common.PaginatingQueryRecord<TemplateEntity>;
+
+    interface TemplateSaveParams {
+      id?: number;
+      templateCode: string;
+      templateName: string;
+      businessType: TemplateKey;
+      paperWidth: number;
+      paperHeight: number;
+      templateJson: Record<string, unknown>;
+      enabled?: boolean;
+      defaultTemplate?: boolean;
+      remark?: string;
+    }
+
+    interface TemplateStatusParams {
+      id: number;
+      enabled: boolean;
+    }
+
     interface FormData {
       customerCode?: string;
       orderCode?: string;

@@ -25,6 +25,7 @@ export const views: Record<LastLevelRouteKey, RouteComponent | (() => Promise<Ro
   alova_scenes: () => import("@/views/alova/scenes/index.vue"),
   alova_user: () => import("@/views/alova/user/index.vue"),
   "basic-manage_app-version-management": () => import("@/views/basic-manage/app-version-management/index.vue"),
+  "basic-manage_label-design": () => import("@/views/basic-manage/label-design/index.vue"),
   "basic-manage_label-management": () => import("@/views/basic-manage/label-management/index.vue"),
   "basic-manage_location-management": () => import("@/views/basic-manage/location-management/index.vue"),
   "basic-manage_material-management": () => import("@/views/basic-manage/material-management/index.vue"),

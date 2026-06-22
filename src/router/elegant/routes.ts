@@ -119,6 +119,15 @@ export const generatedRoutes: GeneratedRoute[] = [
         }
       },
       {
+        name: 'basic-manage_label-design',
+        path: '/basic-manage/label-design',
+        component: 'view.basic-manage_label-design',
+        meta: {
+          title: 'basic-manage_label-design',
+          i18nKey: 'route.basic-manage_label-design'
+        }
+      },
+      {
         name: 'basic-manage_label-management',
         path: '/basic-manage/label-management',
         component: 'view.basic-manage_label-management',
