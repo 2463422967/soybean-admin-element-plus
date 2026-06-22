@@ -38,7 +38,7 @@ function getValue(field: Wms.Label.FieldConfig) {
   <div class="label-preview" :class="[template.sizeClass, `label-template-${template.key}`]">
     <div class="label-preview__header">
       <div>
-        <p class="label-preview__company">厦门康勃医疗科技有限公司</p>
+        <p class="label-preview__company">赞伯WMS标签</p>
         <p class="label-preview__title">{{ template.title }}</p>
       </div>
       <img v-if="qrCodeUrl" :src="qrCodeUrl" alt="标签二维码" class="label-preview__qr" />

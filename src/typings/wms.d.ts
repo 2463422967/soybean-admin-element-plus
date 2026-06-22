@@ -178,6 +178,14 @@ declare namespace Wms {
       checkResult?: string;
     }
 
+    interface ExternalTemplateData {
+      templateKey: TemplateKey;
+      formData: FormData;
+      printCopies?: number;
+      afterPrint?: () => void | Promise<void>;
+      lookupMaterial?: boolean;
+    }
+
     interface QrPayload {
       m?: string | number;
       b?: string | number;

@@ -1,7 +1,9 @@
 <script setup lang="tsx">
-import { ref, watch } from 'vue';
-import { fetchGetReceivingList } from '@/service/api';
+import { nextTick, ref, watch } from 'vue';
+import { fetchGetReceivingList, fetchUpdatePrintStatus } from '@/service/api';
 import { defaultTransform, useUIPaginatedTable } from '@/hooks/common/table';
+import LabelManagement from '@/views/basic-manage/label-management/index.vue';
+import { buildRawMaterialLabelFormData } from './modules/receiving-label';
 
 defineOptions({ name: 'ProcurementReceiving' });
 
@@ -17,6 +19,8 @@ const receiveTypes: Array<{ label: string; value: Wms.Receiving.ReceiveType }> =
 const activeType = ref<Wms.Receiving.ReceiveType>('procurement');
 const activeListTab = ref<Wms.Receiving.ListTab>('unReceive');
 const searchParams = ref(getInitSearchParams());
+const printDialogVisible = ref(false);
+const labelManagementRef = ref<InstanceType<typeof LabelManagement>>();
 
 function getInitSearchParams(): Wms.Receiving.SearchParams {
   return {
@@ -75,7 +79,12 @@ function getColumns(): UI.TableColumn<Wms.Receiving.Item>[] {
     }
   ];
 
-  return [{ prop: 'index', type: 'index', label: '序号', width: 64 }, ...getTypeColumns(), ...common];
+  return [
+    { prop: 'index', type: 'index', label: '序号', width: 64 },
+    ...getTypeColumns(),
+    ...common,
+    ...getOperationColumns()
+  ];
 }
 
 function getTypeColumns(): UI.TableColumn<Wms.Receiving.Item>[] {
@@ -120,6 +129,51 @@ function getTypeColumns(): UI.TableColumn<Wms.Receiving.Item>[] {
 
 function resetSearchParams() {
   searchParams.value = getInitSearchParams();
+}
+
+function getOperationColumns(): UI.TableColumn<Wms.Receiving.Item>[] {
+  if (activeType.value !== 'procurement' || activeListTab.value !== 'recent') {
+    return [];
+  }
+
+  return [
+    {
+      prop: 'operation',
+      label: '操作',
+      align: 'center',
+      fixed: 'right',
+      width: 110,
+      formatter: row => (
+        <ElButton type="primary" size="small" plain disabled={!row.entryId} onClick={() => openPrintDialog(row)}>
+          {{
+            icon: () => <icon-mdi-printer class="text-icon" />,
+            default: () => '打印'
+          }}
+        </ElButton>
+      )
+    }
+  ];
+}
+
+async function openPrintDialog(row: Wms.Receiving.Item) {
+  if (!row.entryId) {
+    window.$message?.warning('当前记录缺少收料通知单分录ID，无法更新打印状态');
+    return;
+  }
+
+  printDialogVisible.value = true;
+  await nextTick();
+
+  await labelManagementRef.value?.setTemplateAndData({
+    templateKey: 'model3',
+    formData: buildRawMaterialLabelFormData(row),
+    printCopies: 1,
+    afterPrint: async () => {
+      await fetchUpdatePrintStatus([Number(row.entryId)]);
+      window.$message?.success('打印状态已更新');
+      await getData();
+    }
+  });
 }
 </script>
 
@@ -195,5 +249,9 @@ function resetSearchParams() {
         />
       </div>
     </ElCard>
+
+    <ElDialog v-model="printDialogVisible" title="打印标签" width="980px" destroy-on-close>
+      <LabelManagement ref="labelManagementRef" />
+    </ElDialog>
   </div>
 </template>

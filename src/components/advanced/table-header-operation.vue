@@ -6,9 +6,12 @@ defineOptions({ name: 'TableHeaderOperation' });
 interface Props {
   disabledDelete?: boolean;
   loading?: boolean;
+  showDefaultActions?: boolean;
 }
 
-defineProps<Props>();
+withDefaults(defineProps<Props>(), {
+  showDefaultActions: false
+});
 
 interface Emits {
   (e: 'add'): void;
@@ -38,7 +41,7 @@ function refresh() {
 <template>
   <ElSpace direction="horizontal" wrap justify="end" class="lt-sm:w-200px">
     <slot name="prefix"></slot>
-    <slot name="default">
+    <slot v-if="$slots.default || showDefaultActions" name="default">
       <ElButton plain type="primary" @click="add">
         <template #icon>
           <icon-ic-round-plus class="text-icon" />

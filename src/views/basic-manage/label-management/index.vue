@@ -8,6 +8,7 @@ import {
   fetchGetSemiProductionList,
   fetchGetSupplierList
 } from '@/service/api';
+import { labelPrintStyle } from './modules/label-print';
 import { getLabelTemplate, labelTemplates } from './modules/label-templates';
 import LabelPreview from './modules/label-preview.vue';
 
@@ -17,6 +18,7 @@ const selectedTemplateKey = ref<Wms.Label.TemplateKey>('model1');
 const printCopies = ref(1);
 const formData = reactive<Wms.Label.FormData>({});
 const lookupLoading = ref(false);
+const afterPrintCallback = ref<NonNullable<Wms.Label.ExternalTemplateData['afterPrint']> | null>(null);
 
 const fieldOptions = reactive<Record<NonNullable<Wms.Label.FieldConfig['optionsKey']>, Wms.Label.FieldOption[]>>({
   productionOrders: [],
@@ -203,9 +205,38 @@ async function printLabels() {
     type: 'html',
     scanStyles: true,
     targetStyles: ['*'],
-    style: '@page { margin: 0; } body { margin: 0; }'
+    style: labelPrintStyle,
+    onPrintDialogClose: () => {
+      const callback = afterPrintCallback.value;
+      afterPrintCallback.value = null;
+      callback?.();
+    }
   });
 }
+
+async function setTemplateAndData(options: Wms.Label.ExternalTemplateData) {
+  selectedTemplateKey.value = options.templateKey;
+  await nextTick();
+
+  resetForm();
+  Object.assign(formData, options.formData);
+  printCopies.value = options.printCopies ?? 1;
+  afterPrintCallback.value = options.afterPrint ?? null;
+
+  if (options.lookupMaterial === false || !formData.materialCode) return;
+
+  lookupLoading.value = true;
+  try {
+    applyMaterial(toMaterial(await fetchGetMaterialInfo(String(formData.materialCode))));
+  } finally {
+    lookupLoading.value = false;
+  }
+}
+
+defineExpose({
+  printLabels,
+  setTemplateAndData
+});
 </script>
 
 <template>

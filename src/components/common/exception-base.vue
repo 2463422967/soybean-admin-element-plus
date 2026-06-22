@@ -1,5 +1,6 @@
 <script lang="ts" setup>
 import { computed } from 'vue';
+import { useAuthStore } from '@/store/modules/auth';
 import { useRouterPush } from '@/hooks/common/router';
 import { $t } from '@/locales';
 
@@ -21,6 +22,7 @@ interface Props {
 const props = defineProps<Props>();
 
 const { routerPushByKey } = useRouterPush();
+const authStore = useAuthStore();
 
 const iconMap: Record<ExceptionType, string> = {
   '403': 'no-permission',
@@ -29,6 +31,10 @@ const iconMap: Record<ExceptionType, string> = {
 };
 
 const icon = computed(() => iconMap[props.type]);
+
+function logout() {
+  authStore.resetStore();
+}
 </script>
 
 <template>
@@ -36,7 +42,10 @@ const icon = computed(() => iconMap[props.type]);
     <div class="flex text-400px text-primary">
       <SvgIcon :local-icon="icon" />
     </div>
-    <ElButton type="primary" @click="routerPushByKey('root')">{{ $t('common.backToHome') }}</ElButton>
+    <ElSpace>
+      <ElButton type="primary" @click="routerPushByKey('root')">{{ $t('common.backToHome') }}</ElButton>
+      <ElButton v-if="type === '403'" @click="logout">{{ $t('common.logout') }}</ElButton>
+    </ElSpace>
   </div>
 </template>
 

@@ -29,3 +29,11 @@ export function fetchGetReceivingList(
     data: params
   });
 }
+
+export function fetchUpdatePrintStatus(entryIds: number[]) {
+  return request<unknown>({
+    url: '/order/updatePrintStatus',
+    method: 'post',
+    data: entryIds
+  });
+}

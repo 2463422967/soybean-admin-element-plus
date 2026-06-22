@@ -3,7 +3,8 @@ import type { RouteKey, RoutePath } from '@elegant-router/types';
 import { useAuthStore } from '@/store/modules/auth';
 import { useRouteStore } from '@/store/modules/route';
 import { localStg } from '@/utils/storage';
-import { getRouteName } from '@/router/elegant/transform';
+import { getRouteName, getRoutePath } from '@/router/elegant/transform';
+import { resolveAuthorizedHomeRedirect } from './shared';
 
 /**
  * create route guard
@@ -136,6 +137,19 @@ async function initRoute(to: RouteLocationNormalized): Promise<RouteLocationRaw 
   }
 
   // it is captured by the "not-found" route, then check whether the route exists
+  const authorizedHome = resolveAuthorizedHomeRedirect({
+    authorizedHome: routeStore.routeHome,
+    configuredHome: import.meta.env.VITE_ROUTE_HOME,
+    configuredHomePath: getRoutePath(import.meta.env.VITE_ROUTE_HOME),
+    currentPath: to.path
+  });
+  if (authorizedHome) {
+    return {
+      name: authorizedHome as RouteKey,
+      replace: true
+    };
+  }
+
   const exist = await routeStore.getIsAuthRouteExist(to.path as RoutePath);
   const noPermissionRoute: RouteKey = '403';
 
