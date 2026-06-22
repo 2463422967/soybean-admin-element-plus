@@ -85,6 +85,22 @@ declare namespace Wms {
       createTime?: string;
     }
 
+    interface ShelfDetail {
+      code: string;
+      name: string;
+      stockName?: string;
+    }
+
+    interface ShelfAddParams {
+      shelfCode: string;
+      shelfName: string;
+      detailList: ShelfDetail[];
+    }
+
+    interface ShelfPrintItem extends Shelf {
+      qrCodeUrl: string;
+    }
+
     type ShelfSearchParams = PageSearchParams;
 
     type ShelfList = Api.Common.PaginatingQueryRecord<Shelf>;

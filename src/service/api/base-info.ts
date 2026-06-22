@@ -36,6 +36,15 @@ export function fetchGetShelfList(params: Wms.BaseInfo.ShelfSearchParams) {
   });
 }
 
+/** add shelf */
+export function fetchAddShelf(data: Wms.BaseInfo.ShelfAddParams) {
+  return request<boolean>({
+    url: '/shelf/addShelf',
+    method: 'post',
+    data
+  });
+}
+
 /** get user list */
 export function fetchGetBaseInfoUserList(params: Wms.BaseInfo.UserSearchParams) {
   return request<Wms.BaseInfo.UserList>({

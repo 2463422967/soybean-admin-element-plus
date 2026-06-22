@@ -41,23 +41,25 @@ function refresh() {
 <template>
   <ElSpace direction="horizontal" wrap justify="end" class="lt-sm:w-200px">
     <slot name="prefix"></slot>
-    <slot v-if="$slots.default || showDefaultActions" name="default">
-      <ElButton plain type="primary" @click="add">
-        <template #icon>
-          <icon-ic-round-plus class="text-icon" />
-        </template>
-        {{ $t('common.add') }}
-      </ElButton>
-      <ElPopconfirm :title="$t('common.confirmDelete')" @confirm="batchDelete">
-        <template #reference>
-          <ElButton type="danger" plain :disabled="disabledDelete">
-            <template #icon>
-              <icon-ic-round-delete class="text-icon" />
-            </template>
-            {{ $t('common.batchDelete') }}
-          </ElButton>
-        </template>
-      </ElPopconfirm>
+    <slot name="default">
+      <template v-if="showDefaultActions">
+        <ElButton plain type="primary" @click="add">
+          <template #icon>
+            <icon-ic-round-plus class="text-icon" />
+          </template>
+          {{ $t('common.add') }}
+        </ElButton>
+        <ElPopconfirm :title="$t('common.confirmDelete')" @confirm="batchDelete">
+          <template #reference>
+            <ElButton type="danger" plain :disabled="disabledDelete">
+              <template #icon>
+                <icon-ic-round-delete class="text-icon" />
+              </template>
+              {{ $t('common.batchDelete') }}
+            </ElButton>
+          </template>
+        </ElPopconfirm>
+      </template>
     </slot>
     <ElButton @click="refresh">
       <template #icon>
