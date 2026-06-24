@@ -35,3 +35,4 @@ yarn.lock
 .VSCodeCounter
 /.playwright-cli/
 
+/.codegraph/
