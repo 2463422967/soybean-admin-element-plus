@@ -71,6 +71,7 @@ declare module "@elegant-router/types" {
     "inventory-manage": "/inventory-manage";
     "login": "/login/:module(pwd-login|code-login|register|reset-pwd|bind-wechat)?";
     "manage": "/manage";
+    "manage_document-source-setting": "/manage/document-source-setting";
     "manage_menu": "/manage/menu";
     "manage_role": "/manage/role";
     "manage_user": "/manage/user";
@@ -229,6 +230,7 @@ declare module "@elegant-router/types" {
     | "internal-manage_location-movement"
     | "internal-manage_warehouse-transfer"
     | "inventory-manage"
+    | "manage_document-source-setting"
     | "manage_menu"
     | "manage_role"
     | "manage_user-detail"

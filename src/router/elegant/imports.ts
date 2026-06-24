@@ -48,6 +48,7 @@ export const views: Record<LastLevelRouteKey, RouteComponent | (() => Promise<Ro
   "internal-manage_location-movement": () => import("@/views/internal-manage/location-movement/index.vue"),
   "internal-manage_warehouse-transfer": () => import("@/views/internal-manage/warehouse-transfer/index.vue"),
   "inventory-manage": () => import("@/views/inventory-manage/index.vue"),
+  "manage_document-source-setting": () => import("@/views/manage/document-source-setting/index.vue"),
   manage_menu: () => import("@/views/manage/menu/index.vue"),
   manage_role: () => import("@/views/manage/role/index.vue"),
   "manage_user-detail": () => import("@/views/manage/user-detail/[id].vue"),

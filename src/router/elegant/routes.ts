@@ -481,6 +481,19 @@ export const generatedRoutes: GeneratedRoute[] = [
     },
     children: [
       {
+        name: 'manage_document-source-setting',
+        path: '/manage/document-source-setting',
+        component: 'view.manage_document-source-setting',
+        meta: {
+          title: '单据参数设置',
+          i18nKey: 'route.manage_document-source-setting',
+          icon: 'mdi:file-cog-outline',
+          order: 4,
+          roles: ['R_ADMIN'],
+          keepAlive: true
+        }
+      },
+      {
         name: 'manage_menu',
         path: '/manage/menu',
         component: 'view.manage_menu',
