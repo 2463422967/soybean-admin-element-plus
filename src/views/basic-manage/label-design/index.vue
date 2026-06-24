@@ -9,7 +9,6 @@ import {
   fetchSetDefaultLabelTemplate,
   fetchUpdateLabelTemplateStatus
 } from '@/service/api';
-import { normalizeHiprintTemplateForPrint } from '../label-management/modules/label-hiprint-template';
 import {
   createBlankTemplate,
   createPrintSampleData,
@@ -288,7 +287,7 @@ function renderTemplatePreview() {
 
   try {
     const previewTemplate = new hiprint.PrintTemplate({
-      template: normalizeHiprintTemplateForPrint(templateJson as any),
+      template: templateJson,
       dataMode: 1
     });
 
@@ -502,7 +501,7 @@ onBeforeUnmount(() => {
 
 <template>
   <div class="label-designer min-h-640px flex-col-stretch gap-16px overflow-hidden">
-    <ElCard v-if="pageMode === 'list'" class="card-wrapper">
+    <ElCard v-if="pageMode === 'list'" class="label-designer__list-card card-wrapper sm:flex-1-hidden">
       <template #header>
         <div class="flex flex-wrap items-center justify-between gap-12px">
           <div>
@@ -518,91 +517,99 @@ onBeforeUnmount(() => {
         </div>
       </template>
 
-      <ElForm :model="searchForm" inline label-width="76px" class="label-template-search">
-        <ElFormItem label="关键词">
-          <ElInput
-            v-model="searchForm.keyWords"
-            clearable
-            class="w-220px"
-            placeholder="模板名称/编码"
-            @keyup.enter="handleSearch"
+      <div class="label-designer__list-body">
+        <ElForm :model="searchForm" inline label-width="76px" class="label-template-search">
+          <ElFormItem label="关键词">
+            <ElInput
+              v-model="searchForm.keyWords"
+              clearable
+              class="w-220px"
+              placeholder="模板名称/编码"
+              @keyup.enter="handleSearch"
+            />
+          </ElFormItem>
+          <ElFormItem label="标签类型">
+            <ElSelect v-model="searchForm.businessType" clearable class="w-180px" placeholder="全部类型">
+              <ElOption
+                v-for="business in labelBusinessOptions"
+                :key="business.key"
+                :label="business.label"
+                :value="business.key"
+              />
+            </ElSelect>
+          </ElFormItem>
+          <ElFormItem label="状态">
+            <ElSelect v-model="searchForm.enabled" clearable class="w-140px" placeholder="全部状态">
+              <ElOption label="启用" :value="true" />
+              <ElOption label="停用" :value="false" />
+            </ElSelect>
+          </ElFormItem>
+          <ElFormItem>
+            <ElButton type="primary" @click="handleSearch">查询</ElButton>
+            <ElButton @click="resetSearch">重置</ElButton>
+          </ElFormItem>
+        </ElForm>
+
+        <div class="label-designer__table-wrap">
+          <ElTable v-loading="templateLoading" :data="templateList" border height="100%">
+            <ElTableColumn prop="templateName" label="模板名称" min-width="180" show-overflow-tooltip />
+            <ElTableColumn prop="templateCode" label="模板编码" min-width="170" show-overflow-tooltip />
+            <ElTableColumn label="标签类型" min-width="160">
+              <template #default="{ row }">
+                {{ getBusinessLabel(row.businessType) }}
+              </template>
+            </ElTableColumn>
+            <ElTableColumn label="尺寸" width="140">
+              <template #default="{ row }">
+                {{ formatPaperSize(row) }}
+              </template>
+            </ElTableColumn>
+            <ElTableColumn label="默认" width="90" align="center">
+              <template #default="{ row }">
+                <ElTag :type="row.defaultTemplate ? 'success' : 'info'">{{ row.defaultTemplate ? '是' : '否' }}</ElTag>
+              </template>
+            </ElTableColumn>
+            <ElTableColumn label="启用状态" width="120" align="center">
+              <template #default="{ row }">
+                <ElSwitch
+                  v-model="row.enabled"
+                  inline-prompt
+                  active-text="启用"
+                  inactive-text="停用"
+                  @change="value => updateTemplateStatus(row, value)"
+                />
+              </template>
+            </ElTableColumn>
+            <ElTableColumn prop="updateTime" label="更新时间" min-width="170" show-overflow-tooltip />
+            <ElTableColumn label="操作" width="300" fixed="right" align="center">
+              <template #default="{ row }">
+                <ElButton size="small" type="primary" plain @click="designTemplate(row)">设计</ElButton>
+                <ElButton size="small" @click="copyTemplate(row)">复制</ElButton>
+                <ElButton
+                  size="small"
+                  :disabled="row.defaultTemplate || !row.enabled"
+                  @click="setTemplateAsDefault(row)"
+                >
+                  设为默认
+                </ElButton>
+                <ElButton size="small" type="danger" plain @click="deleteTemplate(row)">删除</ElButton>
+              </template>
+            </ElTableColumn>
+          </ElTable>
+        </div>
+
+        <div class="label-designer__pagination">
+          <ElPagination
+            v-model:current-page="pagination.current"
+            v-model:page-size="pagination.size"
+            background
+            layout="total, sizes, prev, pager, next"
+            :page-sizes="[10, 20, 50, 100]"
+            :total="pagination.total"
+            @size-change="handleSearch"
+            @current-change="loadTemplateList"
           />
-        </ElFormItem>
-        <ElFormItem label="标签类型">
-          <ElSelect v-model="searchForm.businessType" clearable class="w-180px" placeholder="全部类型">
-            <ElOption
-              v-for="business in labelBusinessOptions"
-              :key="business.key"
-              :label="business.label"
-              :value="business.key"
-            />
-          </ElSelect>
-        </ElFormItem>
-        <ElFormItem label="状态">
-          <ElSelect v-model="searchForm.enabled" clearable class="w-140px" placeholder="全部状态">
-            <ElOption label="启用" :value="true" />
-            <ElOption label="停用" :value="false" />
-          </ElSelect>
-        </ElFormItem>
-        <ElFormItem>
-          <ElButton type="primary" @click="handleSearch">查询</ElButton>
-          <ElButton @click="resetSearch">重置</ElButton>
-        </ElFormItem>
-      </ElForm>
-
-      <ElTable v-loading="templateLoading" :data="templateList" border height="calc(100vh - 340px)">
-        <ElTableColumn prop="templateName" label="模板名称" min-width="180" show-overflow-tooltip />
-        <ElTableColumn prop="templateCode" label="模板编码" min-width="170" show-overflow-tooltip />
-        <ElTableColumn label="标签类型" min-width="160">
-          <template #default="{ row }">
-            {{ getBusinessLabel(row.businessType) }}
-          </template>
-        </ElTableColumn>
-        <ElTableColumn label="尺寸" width="140">
-          <template #default="{ row }">
-            {{ formatPaperSize(row) }}
-          </template>
-        </ElTableColumn>
-        <ElTableColumn label="默认" width="90" align="center">
-          <template #default="{ row }">
-            <ElTag :type="row.defaultTemplate ? 'success' : 'info'">{{ row.defaultTemplate ? '是' : '否' }}</ElTag>
-          </template>
-        </ElTableColumn>
-        <ElTableColumn label="启用状态" width="120" align="center">
-          <template #default="{ row }">
-            <ElSwitch
-              v-model="row.enabled"
-              inline-prompt
-              active-text="启用"
-              inactive-text="停用"
-              @change="value => updateTemplateStatus(row, value)"
-            />
-          </template>
-        </ElTableColumn>
-        <ElTableColumn prop="updateTime" label="更新时间" min-width="170" show-overflow-tooltip />
-        <ElTableColumn label="操作" width="300" fixed="right" align="center">
-          <template #default="{ row }">
-            <ElButton size="small" type="primary" plain @click="designTemplate(row)">设计</ElButton>
-            <ElButton size="small" @click="copyTemplate(row)">复制</ElButton>
-            <ElButton size="small" :disabled="row.defaultTemplate || !row.enabled" @click="setTemplateAsDefault(row)">
-              设为默认
-            </ElButton>
-            <ElButton size="small" type="danger" plain @click="deleteTemplate(row)">删除</ElButton>
-          </template>
-        </ElTableColumn>
-      </ElTable>
-
-      <div class="mt-12px flex justify-end">
-        <ElPagination
-          v-model:current-page="pagination.current"
-          v-model:page-size="pagination.size"
-          background
-          layout="total, sizes, prev, pager, next"
-          :page-sizes="[10, 20, 50, 100]"
-          :total="pagination.total"
-          @size-change="handleSearch"
-          @current-change="loadTemplateList"
-        />
+        </div>
       </div>
     </ElCard>
 
@@ -789,11 +796,49 @@ onBeforeUnmount(() => {
 
 <style scoped>
 .label-template-search {
+  flex-shrink: 0;
   margin-bottom: 12px;
 }
 
 .label-template-form {
   margin-bottom: 4px;
+}
+
+.label-designer__list-card {
+  display: flex;
+  min-height: 0;
+  flex-direction: column;
+}
+
+.label-designer__list-card :deep(.el-card__header) {
+  flex-shrink: 0;
+}
+
+.label-designer__list-card :deep(.el-card__body) {
+  display: flex;
+  min-height: 0;
+  flex: 1;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.label-designer__list-body {
+  display: flex;
+  min-height: 0;
+  flex: 1;
+  flex-direction: column;
+}
+
+.label-designer__table-wrap {
+  min-height: 320px;
+  flex: 1;
+}
+
+.label-designer__pagination {
+  display: flex;
+  flex-shrink: 0;
+  justify-content: flex-end;
+  margin-top: 12px;
 }
 
 .label-designer__meta {

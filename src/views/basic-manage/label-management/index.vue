@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { computed, nextTick, onMounted, reactive, ref, shallowRef, watch } from 'vue';
-import printJS from 'print-js';
 import { defaultElementTypeProvider as DefaultElementTypeProvider, disAutoConnect, hiprint } from 'vue-plugin-hiprint';
 import {
   fetchGetDefaultLabelTemplate,
@@ -10,15 +9,9 @@ import {
   fetchGetSemiProductionList,
   fetchGetSupplierList
 } from '@/service/api';
-import { labelPrintStyle } from './modules/label-print';
-import {
-  createHiprintPrintPageStyle,
-  normalizeHiprintTemplateForPrint,
-  resolvePrintableHiprintTemplate
-} from './modules/label-hiprint-template';
+import { createHiprintPrintPageStyle, resolvePrintableHiprintTemplate } from './modules/label-hiprint-template';
 import { buildLabelQrText } from './modules/label-qrcode';
 import { getLabelTemplate, labelTemplates } from './modules/label-templates';
-import LabelPreview from './modules/label-preview.vue';
 
 defineOptions({ name: 'LabelPrint' });
 
@@ -28,7 +21,6 @@ const formData = reactive<Wms.Label.FormData>({});
 const lookupLoading = ref(false);
 const afterPrintCallback = ref<NonNullable<Wms.Label.ExternalTemplateData['afterPrint']> | null>(null);
 const previewLoading = ref(false);
-const hiprintPreviewEnabled = ref(false);
 const previewTemplateRef = shallowRef<Wms.Label.TemplateEntity | null>(null);
 
 const fieldOptions = reactive<Record<NonNullable<Wms.Label.FieldConfig['optionsKey']>, Wms.Label.FieldOption[]>>({
@@ -67,7 +59,7 @@ watch(selectedTemplateKey, async () => {
 watch(
   formData,
   () => {
-    if (hiprintPreviewEnabled.value) {
+    if (previewTemplateRef.value) {
       renderHiprintPreview();
     }
   },
@@ -274,9 +266,9 @@ function renderHiprintPreview() {
       providers: [new DefaultElementTypeProvider()]
     });
 
-    const printableTemplate = resolvePrintableHiprintTemplate(template, currentTemplate.value);
+    const printableTemplate = resolvePrintableHiprintTemplate(template);
     const previewTemplate = new hiprint.PrintTemplate({
-      template: normalizeHiprintTemplateForPrint(printableTemplate),
+      template: printableTemplate,
       dataMode: 1
     });
 
@@ -285,10 +277,8 @@ function renderHiprintPreview() {
     }
 
     appendHiprintHtml(previewContainer, previewTemplate.getHtml(buildHiprintPrintData()));
-    hiprintPreviewEnabled.value = true;
   } catch (error) {
     previewContainer.empty();
-    hiprintPreviewEnabled.value = false;
     window.$message?.error(`标签预览失败：${error instanceof Error ? error.message : String(error)}`);
   } finally {
     previewLoading.value = false;
@@ -303,33 +293,19 @@ async function loadPreviewTemplate() {
 
     if (!error && template?.templateJson) {
       previewTemplateRef.value = template;
-      hiprintPreviewEnabled.value = true;
       await nextTick();
       renderHiprintPreview();
       return;
     }
 
     previewTemplateRef.value = null;
-    hiprintPreviewEnabled.value = false;
+    $('#label-hiprint-preview').empty();
   } catch {
     previewTemplateRef.value = null;
-    hiprintPreviewEnabled.value = false;
+    $('#label-hiprint-preview').empty();
   } finally {
     previewLoading.value = false;
   }
-}
-
-async function printStaticLabels() {
-  await nextTick();
-
-  printJS({
-    printable: 'label-print-area',
-    type: 'html',
-    scanStyles: true,
-    targetStyles: ['*'],
-    style: labelPrintStyle,
-    onPrintDialogClose: consumeAfterPrintCallback
-  });
 }
 
 async function printByHiprint(template: Wms.Label.TemplateEntity) {
@@ -339,9 +315,9 @@ async function printByHiprint(template: Wms.Label.TemplateEntity) {
   });
 
   const printData = printCopyItems.value.map(() => buildHiprintPrintData());
-  const printableTemplate = resolvePrintableHiprintTemplate(template, currentTemplate.value);
+  const printableTemplate = resolvePrintableHiprintTemplate(template);
   const printTemplate = new hiprint.PrintTemplate({
-    template: normalizeHiprintTemplateForPrint(printableTemplate),
+    template: printableTemplate,
     dataMode: 1
   });
 
@@ -357,18 +333,14 @@ async function printByHiprint(template: Wms.Label.TemplateEntity) {
 }
 
 async function printLabels() {
-  try {
-    const { data: template, error } = await fetchGetDefaultLabelTemplate(selectedTemplateKey.value);
+  const { data: template, error } = await fetchGetDefaultLabelTemplate(selectedTemplateKey.value);
 
-    if (!error && template?.templateJson) {
-      await printByHiprint(template);
-      return;
-    }
-  } catch {
-    window.$message?.warning('未读取到可用设计模板，已使用系统默认标签预览打印');
+  if (error || !template?.templateJson) {
+    window.$message?.warning('未读取到可用标签模板，请先在标签管理维护模板');
+    return;
   }
 
-  await printStaticLabels();
+  await printByHiprint(template);
 }
 
 async function setTemplateAndData(options: Wms.Label.ExternalTemplateData) {
@@ -493,26 +465,17 @@ defineExpose({
         </div>
       </template>
       <ElScrollbar class="h-full">
-        <div v-loading="previewLoading" class="label-preview-stage">
-          <div v-show="hiprintPreviewEnabled" id="label-hiprint-preview" class="label-hiprint-preview"></div>
-          <LabelPreview v-if="!hiprintPreviewEnabled" :template="currentTemplate" :form-data="formData" />
+        <div v-loading="previewLoading" class="label-hiprint-stage">
+          <div id="label-hiprint-preview" class="label-hiprint-preview"></div>
+          <ElEmpty v-if="!previewTemplateRef" description="未读取到可用标签模板" />
         </div>
       </ElScrollbar>
     </ElCard>
-
-    <div id="label-print-area" class="label-print-source">
-      <LabelPreview
-        v-for="item in printCopyItems"
-        :key="`${currentTemplate.key}-${item}`"
-        :template="currentTemplate"
-        :form-data="formData"
-      />
-    </div>
   </div>
 </template>
 
 <style scoped>
-.label-preview-stage {
+.label-hiprint-stage {
   display: flex;
   min-height: 360px;
   align-items: flex-start;
@@ -529,13 +492,5 @@ defineExpose({
   margin: 0 auto;
   background: #fff;
   box-shadow: 0 2px 10px rgb(15 23 42 / 12%);
-}
-
-.label-print-source {
-  position: fixed;
-  top: 0;
-  left: -10000px;
-  width: 120mm;
-  background: #fff;
 }
 </style>
