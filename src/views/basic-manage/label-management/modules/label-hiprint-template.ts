@@ -112,48 +112,152 @@ function createLineElement(tid: 'defaultModule.hline' | 'defaultModule.vline', o
   return { tid, options };
 }
 
-function createRawMaterialHiprintTemplate(template: Wms.Label.TemplateConfig): BusinessHiprintTemplate {
-  const paper = { width: 80, height: 80 };
-  const margin = 5;
-  const qrSize = 21;
-  const leftLabelWidth = 16;
-  const rightLabelWidth = 12;
-  const leftValueWidth = 26;
-  const rightValueWidth = 17;
-  const rightStart = 47;
-  const rowHeight = 7.8;
-  const fontSize = 8.5;
+type ExpandedFieldRow = [Wms.Label.FieldConfig, Wms.Label.FieldConfig?];
+type FieldProp = keyof Wms.Label.FormData;
+
+interface ExpandedTemplateLayout {
+  logo: Record<string, unknown>;
+  title: Record<string, unknown>;
+  company: Record<string, unknown>;
+  qrcode: Record<string, unknown>;
+  field: {
+    topStart: number;
+    rowHeight: number;
+    textHeight: number;
+    fontSize: number;
+    leftLabelStart: number;
+    leftLabelWidth: number;
+    leftValueWidth: number;
+    rightStart: number;
+    rightLabelWidth: number;
+    rightValueWidth: number;
+  };
+}
+
+const smallExpandedLayout: ExpandedTemplateLayout = {
+  logo: { left: 42, top: 7, width: 39, height: 22 },
+  title: { left: 82, top: 8, width: 72, height: 22, fontSize: 20 },
+  company: { left: 42, top: 32, width: 120, height: 16, fontSize: 11 },
+  qrcode: { left: 158, top: 14, width: 52, height: 52 },
+  field: {
+    topStart: 67,
+    rowHeight: 21,
+    textHeight: 15,
+    fontSize: 11,
+    leftLabelStart: 42,
+    leftLabelWidth: 48,
+    leftValueWidth: 58,
+    rightStart: 135,
+    rightLabelWidth: 35,
+    rightValueWidth: 38
+  }
+};
+
+const finishedExpandedLayout: ExpandedTemplateLayout = {
+  logo: { left: 42, top: 14, width: 45, height: 25 },
+  title: { left: 94, top: 15, width: 110, height: 25, fontSize: 22 },
+  company: { left: 42, top: 45, width: 160, height: 18, fontSize: 12 },
+  qrcode: { left: 210, top: 15, width: 64, height: 64 },
+  field: {
+    topStart: 95,
+    rowHeight: 29,
+    textHeight: 18,
+    fontSize: 12,
+    leftLabelStart: 42,
+    leftLabelWidth: 58,
+    leftValueWidth: 70,
+    rightStart: 160,
+    rightLabelWidth: 50,
+    rightValueWidth: 52
+  }
+};
+
+function getFieldByProp(template: Wms.Label.TemplateConfig, prop: FieldProp) {
+  return template.printFields.find(field => field.prop === prop);
+}
+
+function getFieldRowsByProps(
+  template: Wms.Label.TemplateConfig,
+  rows: Array<[FieldProp] | [FieldProp, FieldProp]>
+): ExpandedFieldRow[] {
+  return rows.flatMap(([leftProp, rightProp]) => {
+    const leftField = getFieldByProp(template, leftProp);
+
+    if (!leftField) return [];
+
+    const rightField = rightProp ? getFieldByProp(template, rightProp) : undefined;
+
+    return [[leftField, rightField]];
+  });
+}
+
+function getExpandedFieldRows(template: Wms.Label.TemplateConfig): ExpandedFieldRow[] {
+  if (template.key === 'model1') {
+    return getFieldRowsByProps(template, [
+      ['materialName'],
+      ['customerCode', 'orderCode'],
+      ['batchCode', 'materialCode'],
+      ['modelSpec', 'qty'],
+      ['quantity', 'checkResult'],
+      ['remark']
+    ]);
+  }
+
+  if (template.key === 'model2') {
+    return getFieldRowsByProps(template, [
+      ['materialName'],
+      ['materialCode', 'color'],
+      ['batchCode', 'quantity'],
+      ['productionDate', 'inspector'],
+      ['worker']
+    ]);
+  }
+
+  if (template.key === 'model4') {
+    return getFieldRowsByProps(template, [
+      ['materialName'],
+      ['customerCode', 'orderCode'],
+      ['batchCode', 'modelSpec'],
+      ['qty', 'quantity'],
+      ['remark', 'checkResult']
+    ]);
+  }
+
+  return getFieldRowsByProps(template, [
+    ['materialName'],
+    ['materialCode', 'color'],
+    ['batchCode', 'quantity'],
+    ['productionDate', 'inspector'],
+    ['supplier']
+  ]);
+}
+
+function getPrintFieldTitle(field: Wms.Label.FieldConfig) {
+  if (field.prop === 'checkResult') return '校验员';
+
+  return field.label;
+}
+
+function createExpandedHiprintTemplate(template: Wms.Label.TemplateConfig): BusinessHiprintTemplate {
+  const paper = getPaperSize(template);
+  const layout = paper.width === 100 ? finishedExpandedLayout : smallExpandedLayout;
   const elements: BusinessHiprintElement[] = [
     createImageElement({
-      left: margin,
-      top: 4,
-      width: 18,
-      height: 8,
+      ...layout.logo,
       src: '/images/LOGO 黑白.bmp'
     }),
     createTextElement({
-      left: 24,
-      top: 5,
-      width: 29,
-      height: 8,
+      ...layout.title,
       title: template.title,
-      fontSize: 15,
       fontWeight: 'bold'
     }),
     createTextElement({
-      left: margin,
-      top: 13.5,
-      width: 46,
-      height: 5,
+      ...layout.company,
       title: '厦门康勃医疗科技有限公司',
-      fontSize: 8,
       fontWeight: 'bold'
     }),
     createCodeElement('defaultModule.qrcode', {
-      left: paper.width - margin - qrSize,
-      top: 5,
-      width: qrSize,
-      height: qrSize,
+      ...layout.qrcode,
       field: 'qrcode',
       title: '',
       hideTitle: true,
@@ -162,7 +266,13 @@ function createRawMaterialHiprintTemplate(template: Wms.Label.TemplateConfig): B
   ];
 
   function addText(options: Record<string, unknown>) {
-    elements.push(createTextElement({ fontSize, height: 5, ...options }));
+    elements.push(
+      createTextElement({
+        fontSize: layout.field.fontSize,
+        height: layout.field.textHeight,
+        ...options
+      })
+    );
   }
 
   function addUnderline(left: number, top: number, width: number) {
@@ -177,180 +287,51 @@ function createRawMaterialHiprintTemplate(template: Wms.Label.TemplateConfig): B
     );
   }
 
-  function addPairRow(top: number, leftField: Wms.Label.FieldConfig, rightField?: Wms.Label.FieldConfig) {
-    const textTop = top + 1;
+  function addPairRow(rowIndex: number, leftField: Wms.Label.FieldConfig, rightField?: Wms.Label.FieldConfig) {
+    const top = layout.field.topStart + rowIndex * layout.field.rowHeight;
+    const leftValueStart = layout.field.leftLabelStart + layout.field.leftLabelWidth + 2;
 
     addText({
-      left: margin,
-      top: textTop,
-      width: leftLabelWidth,
-      title: `${leftField.label}:`,
+      left: layout.field.leftLabelStart,
+      top,
+      width: layout.field.leftLabelWidth,
+      title: `${getPrintFieldTitle(leftField)}:`,
       fontWeight: 'bold'
     });
     addText({
-      left: margin + leftLabelWidth,
-      top: textTop,
-      width: leftValueWidth,
+      left: leftValueStart,
+      top,
+      width: layout.field.leftValueWidth,
       field: leftField.prop,
       title: '',
       hideTitle: true
     });
-    addUnderline(margin + leftLabelWidth, top + rowHeight - 0.7, leftValueWidth - 2);
+    addUnderline(leftValueStart, top + layout.field.rowHeight - 4, layout.field.leftValueWidth - 4);
 
     if (!rightField) return;
 
+    const rightValueStart = layout.field.rightStart + layout.field.rightLabelWidth + 2;
+
     addText({
-      left: rightStart,
-      top: textTop,
-      width: rightLabelWidth,
-      title: `${rightField.label}:`,
+      left: layout.field.rightStart,
+      top,
+      width: layout.field.rightLabelWidth,
+      title: `${getPrintFieldTitle(rightField)}:`,
       fontWeight: 'bold'
     });
     addText({
-      left: rightStart + rightLabelWidth,
-      top: textTop,
-      width: rightValueWidth,
+      left: rightValueStart,
+      top,
+      width: layout.field.rightValueWidth,
       field: rightField.prop,
       title: '',
       hideTitle: true
     });
-    addUnderline(rightStart + rightLabelWidth, top + rowHeight - 0.7, rightValueWidth - 1);
+    addUnderline(rightValueStart, top + layout.field.rowHeight - 4, layout.field.rightValueWidth - 3);
   }
 
-  const [materialName, materialCode, color, batchCode, quantity, productionDate, inspector, supplier] =
-    template.printFields;
-
-  addPairRow(27, materialName);
-  addPairRow(35, materialCode, color);
-  addPairRow(43, batchCode, quantity);
-  addPairRow(51, productionDate, inspector);
-  addPairRow(59, supplier);
-
-  return {
-    panels: [
-      {
-        index: 0,
-        name: template.label,
-        width: paper.width,
-        height: paper.height,
-        paperHeader: 0,
-        paperFooter: paper.height * 2.835,
-        printElements: elements
-      }
-    ]
-  };
-}
-
-export function createBusinessHiprintTemplate(template: Wms.Label.TemplateConfig): BusinessHiprintTemplate {
-  if (template.key === 'model3') {
-    return createRawMaterialHiprintTemplate(template);
-  }
-
-  const paper = getPaperSize(template);
-  const margin = paper.width === 100 ? 8 : 5;
-  const contentWidth = paper.width - margin * 2;
-  const qrSize = paper.width === 100 ? 24 : 20;
-  const headerHeight = paper.width === 100 ? 34 : 24;
-  const labelWidth = paper.width === 100 ? 30 : 24;
-  const rowStartTop = margin + headerHeight + 4;
-  const rowHeight = Math.min(
-    paper.width === 100 ? 9 : 6,
-    (paper.height - rowStartTop - margin) / template.printFields.length
-  );
-  const tableHeight = Number((rowHeight * template.printFields.length).toFixed(2));
-  const fontSize = paper.width === 100 ? 11 : 8;
-  const elements: BusinessHiprintElement[] = [
-    createTextElement({
-      left: margin,
-      top: margin,
-      width: contentWidth - qrSize - 5,
-      height: 6,
-      title: '赞伯WMS标签',
-      fontSize: paper.width === 100 ? 10 : 8,
-      fontWeight: 'bold'
-    }),
-    createTextElement({
-      left: margin,
-      top: margin + 9,
-      width: contentWidth - qrSize - 5,
-      height: paper.width === 100 ? 12 : 9,
-      title: template.title,
-      fontSize: paper.width === 100 ? 18 : 14,
-      fontWeight: 'bold'
-    }),
-    createCodeElement('defaultModule.qrcode', {
-      left: paper.width - margin - qrSize,
-      top: margin,
-      width: qrSize,
-      height: qrSize,
-      field: 'qrcode',
-      title: '',
-      hideTitle: true,
-      textType: 'qrcode'
-    }),
-    createLineElement('defaultModule.hline', {
-      left: margin,
-      top: margin + headerHeight,
-      width: contentWidth,
-      height: 1,
-      borderWidth: 0.75
-    }),
-    {
-      tid: 'defaultModule.rect',
-      options: {
-        left: margin,
-        top: rowStartTop,
-        width: contentWidth,
-        height: tableHeight,
-        borderWidth: 0.75
-      }
-    },
-    createLineElement('defaultModule.vline', {
-      left: margin + labelWidth,
-      top: rowStartTop,
-      width: 1,
-      height: tableHeight,
-      borderWidth: 0.75
-    })
-  ];
-
-  template.printFields.forEach((field, index) => {
-    const top = Number((rowStartTop + rowHeight * index).toFixed(2));
-    const textTop = Number((top + 1.2).toFixed(2));
-
-    if (index > 0) {
-      elements.push(
-        createLineElement('defaultModule.hline', {
-          left: margin,
-          top,
-          width: contentWidth,
-          height: 1,
-          borderWidth: 0.75
-        })
-      );
-    }
-
-    elements.push(
-      createTextElement({
-        left: margin + 2,
-        top: textTop,
-        width: labelWidth - 4,
-        height: rowHeight - 1,
-        title: field.label,
-        fontSize,
-        fontWeight: 'bold'
-      }),
-      createTextElement({
-        left: margin + labelWidth + 2,
-        top: textTop,
-        width: contentWidth - labelWidth - 4,
-        height: rowHeight - 1,
-        field: field.prop,
-        title: '',
-        hideTitle: true,
-        fontSize
-      })
-    );
+  getExpandedFieldRows(template).forEach(([leftField, rightField], index) => {
+    addPairRow(index, leftField, rightField);
   });
 
   return {
@@ -368,14 +349,14 @@ export function createBusinessHiprintTemplate(template: Wms.Label.TemplateConfig
   };
 }
 
+export function createBusinessHiprintTemplate(template: Wms.Label.TemplateConfig): BusinessHiprintTemplate {
+  return createExpandedHiprintTemplate(template);
+}
+
 export function resolvePrintableHiprintTemplate(
   template: Wms.Label.TemplateEntity,
-  templateConfig: Wms.Label.TemplateConfig
+  _templateConfig: Wms.Label.TemplateConfig
 ): BusinessHiprintTemplate {
-  if (templateConfig.key === 'model3' && template.templateCode === 'model3-default') {
-    return createBusinessHiprintTemplate(templateConfig);
-  }
-
   return template.templateJson as unknown as BusinessHiprintTemplate;
 }
 

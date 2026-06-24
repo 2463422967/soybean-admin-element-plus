@@ -10,6 +10,13 @@ import { getLabelTemplate } from './label-templates';
 const rawTemplate = createBusinessHiprintTemplate(getLabelTemplate('model3'));
 const rawPanel = rawTemplate.panels[0];
 const rawElements = rawPanel.printElements;
+const materialNameValueElement = rawElements.find(
+  element => element.tid === 'defaultModule.text' && element.options.field === 'materialName'
+);
+const qrcodeElement = rawElements.find(element => element.tid === 'defaultModule.qrcode');
+const titleElement = rawElements.find(
+  element => element.tid === 'defaultModule.text' && element.options.title === '产品标识卡'
+);
 
 assert.equal(rawPanel.width, 80);
 assert.equal(rawPanel.height, 80);
@@ -25,6 +32,12 @@ assert.equal(
   ),
   true
 );
+assert.equal(qrcodeElement?.options.left, 158);
+assert.equal(qrcodeElement?.options.width, 52);
+assert.equal(titleElement?.options.left, 82);
+assert.equal(titleElement?.options.fontSize, 20);
+assert.equal(materialNameValueElement?.options.left, 92);
+assert.equal(materialNameValueElement?.options.top, 67);
 assert.equal(
   rawElements.some(
     element => element.tid === 'defaultModule.text' && String(element.options.title).includes('物料料号')
@@ -56,6 +69,106 @@ assert.equal(
 assert.equal(
   rawElements.some(element => 'printElementType' in element),
   false
+);
+
+const semiTemplate = createBusinessHiprintTemplate(getLabelTemplate('model2'));
+const semiElements = semiTemplate.panels[0].printElements;
+const semiQrcodeElement = semiElements.find(element => element.tid === 'defaultModule.qrcode');
+const semiMaterialNameElement = semiElements.find(
+  element => element.tid === 'defaultModule.text' && element.options.field === 'materialName'
+);
+
+assert.equal(semiTemplate.panels[0].width, 80);
+assert.equal(semiTemplate.panels[0].height, 80);
+assert.equal(semiQrcodeElement?.options.left, 158);
+assert.equal(semiQrcodeElement?.options.width, 52);
+assert.equal(semiMaterialNameElement?.options.left, 92);
+assert.equal(semiMaterialNameElement?.options.top, 67);
+assert.equal(
+  semiElements.some(element => element.tid === 'defaultModule.rect'),
+  false
+);
+assert.equal(
+  semiElements.some(element => element.tid === 'defaultModule.text' && element.options.field === 'worker'),
+  true
+);
+assert.equal(
+  semiElements.some(element => element.tid === 'defaultModule.text' && element.options.field === 'inspector'),
+  true
+);
+
+const siliconeTemplate = createBusinessHiprintTemplate(getLabelTemplate('model4'));
+const siliconeElements = siliconeTemplate.panels[0].printElements;
+const siliconeQrcodeElement = siliconeElements.find(element => element.tid === 'defaultModule.qrcode');
+const siliconeMaterialNameElement = siliconeElements.find(
+  element => element.tid === 'defaultModule.text' && element.options.field === 'materialName'
+);
+
+assert.equal(siliconeTemplate.panels[0].width, 80);
+assert.equal(siliconeTemplate.panels[0].height, 80);
+assert.equal(siliconeQrcodeElement?.options.left, 158);
+assert.equal(siliconeQrcodeElement?.options.width, 52);
+assert.equal(siliconeMaterialNameElement?.options.left, 92);
+assert.equal(siliconeMaterialNameElement?.options.top, 67);
+assert.equal(
+  siliconeElements.some(element => element.tid === 'defaultModule.rect'),
+  false
+);
+assert.equal(
+  siliconeElements.some(element => element.tid === 'defaultModule.text' && element.options.field === 'materialCode'),
+  false
+);
+assert.equal(
+  siliconeElements.some(element => element.tid === 'defaultModule.text' && element.options.field === 'checkResult'),
+  true
+);
+assert.equal(
+  siliconeElements.some(
+    element => element.tid === 'defaultModule.text' && String(element.options.title).includes('校验结果/校验员')
+  ),
+  false
+);
+assert.equal(
+  siliconeElements.some(element => element.tid === 'defaultModule.text' && element.options.title === '校验员:'),
+  true
+);
+
+const finishedTemplate = createBusinessHiprintTemplate(getLabelTemplate('model1'));
+const finishedElements = finishedTemplate.panels[0].printElements;
+const finishedQrcodeElement = finishedElements.find(element => element.tid === 'defaultModule.qrcode');
+const finishedTitleElement = finishedElements.find(
+  element => element.tid === 'defaultModule.text' && element.options.title === '成品标识卡'
+);
+const finishedMaterialNameElement = finishedElements.find(
+  element => element.tid === 'defaultModule.text' && element.options.field === 'materialName'
+);
+
+assert.equal(finishedTemplate.panels[0].width, 100);
+assert.equal(finishedTemplate.panels[0].height, 140);
+assert.equal(finishedTemplate.panels[0].paperFooter, 396.9);
+assert.equal(finishedQrcodeElement?.options.left, 210);
+assert.equal(finishedQrcodeElement?.options.width, 64);
+assert.equal(finishedTitleElement?.options.left, 94);
+assert.equal(finishedTitleElement?.options.fontSize, 22);
+assert.equal(finishedMaterialNameElement?.options.left, 102);
+assert.equal(finishedMaterialNameElement?.options.top, 95);
+assert.equal(
+  finishedElements.some(element => element.tid === 'defaultModule.rect'),
+  false
+);
+assert.equal(
+  finishedElements.some(element => element.tid === 'defaultModule.text' && element.options.field === 'checkResult'),
+  true
+);
+assert.equal(
+  finishedElements.some(
+    element => element.tid === 'defaultModule.text' && String(element.options.title).includes('校验结果/校验员')
+  ),
+  false
+);
+assert.equal(
+  finishedElements.some(element => element.tid === 'defaultModule.text' && element.options.title === '校验员:'),
+  true
 );
 
 const normalized = normalizeHiprintTemplateForPrint({
@@ -148,7 +261,7 @@ const resolvedSystemRawTemplate = resolvePrintableHiprintTemplate(
 
 assert.equal(
   resolvedSystemRawTemplate.panels[0].printElements.some(element => element.tid === 'defaultModule.rect'),
-  false
+  true
 );
 
 const customRawTemplate = resolvePrintableHiprintTemplate(

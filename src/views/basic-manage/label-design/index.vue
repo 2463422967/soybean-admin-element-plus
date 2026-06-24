@@ -12,7 +12,6 @@ import {
 import { normalizeHiprintTemplateForPrint } from '../label-management/modules/label-hiprint-template';
 import {
   createBlankTemplate,
-  createDemoTemplate,
   createPrintSampleData,
   designerComponents,
   getPaperOption,
@@ -195,13 +194,6 @@ function resetSearch() {
   searchForm.businessType = '';
   searchForm.enabled = undefined;
   handleSearch();
-}
-
-function loadDemoTemplate() {
-  const json = createDemoTemplate(selectedPaperKey.value);
-
-  designJsonText.value = JSON.stringify(json, null, 2);
-  mountHiprintDesigner(json);
 }
 
 function loadBlankTemplate() {
@@ -628,7 +620,6 @@ onBeforeUnmount(() => {
               <ElButton :disabled="!selectedTemplateId" type="danger" plain @click="deleteCurrentTemplate">
                 删除
               </ElButton>
-              <ElButton @click="loadDemoTemplate">恢复示例</ElButton>
               <ElButton @click="loadBlankTemplate">清空画布</ElButton>
               <ElButton @click="loadJsonFromLocal">读取本地JSON</ElButton>
               <ElButton type="primary" :loading="saveLoading" @click="saveTemplateToBackend">保存模板</ElButton>
