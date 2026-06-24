@@ -123,7 +123,10 @@ export const generatedRoutes: GeneratedRoute[] = [
         path: '/basic-manage/label-design',
         component: 'view.basic-manage_label-design',
         meta: {
-          title: 'basic-manage_label-design',
+          title: '标签管理',
+          icon: 'mdi:label-outline',
+          order: 8,
+          keepAlive: true,
           i18nKey: 'route.basic-manage_label-design'
         }
       },
@@ -132,9 +135,9 @@ export const generatedRoutes: GeneratedRoute[] = [
         path: '/basic-manage/label-management',
         component: 'view.basic-manage_label-management',
         meta: {
-          title: '标签管理',
-          icon: 'mdi:qrcode',
-          order: 8,
+          title: '标签打印',
+          icon: 'mdi:printer',
+          order: 9,
           keepAlive: true,
           i18nKey: 'route.basic-manage_label-management'
         }

@@ -38,6 +38,13 @@
   - `pnpm build:test`
 - 新增或移动路由页面后，根据项目需要运行 `pnpm gen-route`。
 
+## 外部工具与后端关联
+
+- 前端测试、页面交互验证和浏览器自动化优先使用 Playwright MCP。
+- 数据库查询、数据核对和只读排查优先使用 DBX MCP。
+- 关联后端目录为 `D:\Work\WMS\kb-wms-backend`。
+- 关联后端分支为 `origin/demo/prod-soybeanjs`。
+
 ## 子代理要求
 
 - 子代理处理页面迁移时，必须先读本文件和对应指南。
