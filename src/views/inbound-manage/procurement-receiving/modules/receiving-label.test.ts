@@ -13,9 +13,9 @@ const formData = buildRawMaterialLabelFormData({
 
 assert.deepEqual(formData, {
   materialCode: '8.12.999998',
+  materialName: '模具修模（通用）',
   batchCode: '44',
   productionDate: '2026-06-18',
+  quantity: 1,
   supplier: '供应商332'
 });
-
-assert.equal('quantity' in formData, false);

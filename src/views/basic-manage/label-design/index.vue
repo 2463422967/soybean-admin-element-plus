@@ -9,6 +9,7 @@ import {
   fetchSetDefaultLabelTemplate,
   fetchUpdateLabelTemplateStatus
 } from '@/service/api';
+import { normalizeHiprintTemplateForPrint } from '../label-management/modules/label-hiprint-template';
 import {
   createBlankTemplate,
   createDemoTemplate,
@@ -27,9 +28,11 @@ import {
 
 defineOptions({ name: 'LabelDesign' });
 
+type PageMode = 'list' | 'designer';
+
 const storageKey = 'zanbo-wms-label-designer-generic-poc';
 
-const selectedBusinessType = ref<Wms.Label.TemplateKey>('model1');
+const pageMode = ref<PageMode>('list');
 const selectedTemplateId = ref<number>();
 const selectedPaperKey = ref<DesignerPaperKey>('label100x140');
 const designJsonText = ref('');
@@ -39,41 +42,65 @@ const saveLoading = ref(false);
 const hiprintReady = ref(false);
 const hiprintError = ref('');
 const hiprintTemplateRef = shallowRef<any>(null);
+const previewVisible = ref(false);
+const previewLoading = ref(false);
+const previewTemplateJson = shallowRef<Record<string, unknown> | null>(null);
+
+const searchForm = reactive({
+  keyWords: '',
+  businessType: '' as Wms.Label.TemplateKey | '',
+  enabled: undefined as boolean | undefined
+});
+
+const pagination = reactive({
+  current: 1,
+  size: 10,
+  total: 0
+});
 
 const templateForm = reactive({
-  templateCode: createTemplateCode('model1'),
-  templateName: createTemplateName('model1'),
+  templateCode: createTemplateCode(),
+  templateName: createTemplateName(),
+  businessType: 'model1' as Wms.Label.TemplateKey,
   enabled: true,
-  defaultTemplate: true,
+  defaultTemplate: false,
   remark: ''
 });
 
 const baseComponents = computed(() => designerComponents.filter(item => item.group === 'base'));
 const assistComponents = computed(() => designerComponents.filter(item => item.group === 'assist'));
 const currentPaper = computed(() => getPaperOption(selectedPaperKey.value));
-const currentBusinessOption = computed(() => getLabelBusinessOption(selectedBusinessType.value));
-const currentTemplateRecord = computed(() => templateList.value.find(item => item.id === selectedTemplateId.value));
+const currentBusinessOption = computed(() => getLabelBusinessOption(templateForm.businessType));
+
+function getBusinessLabel(businessType: Wms.Label.TemplateKey) {
+  return getLabelBusinessOption(businessType).label;
+}
+
+function formatPaperSize(template: Pick<Wms.Label.TemplateEntity, 'paperWidth' | 'paperHeight'>) {
+  return `${template.paperWidth}mm x ${template.paperHeight}mm`;
+}
 
 function getPaperKeyBySize(width: number, height: number) {
   return (
     paperOptions.find(item => Number(item.width) === Number(width) && Number(item.height) === Number(height))?.key ??
-    currentBusinessOption.value.paperKey
+    'label100x140'
   );
 }
 
-function resetTemplateForm() {
+function resetTemplateForm(businessType: Wms.Label.TemplateKey = 'model1') {
   selectedTemplateId.value = undefined;
-  selectedPaperKey.value = currentBusinessOption.value.paperKey;
-  templateForm.templateCode = createTemplateCode(selectedBusinessType.value);
-  templateForm.templateName = createTemplateName(selectedBusinessType.value);
+  templateForm.businessType = businessType;
+  selectedPaperKey.value = getLabelBusinessOption(businessType).paperKey;
+  templateForm.templateCode = createTemplateCode();
+  templateForm.templateName = createTemplateName();
   templateForm.enabled = true;
-  templateForm.defaultTemplate = templateList.value.length === 0;
+  templateForm.defaultTemplate = false;
   templateForm.remark = '';
 }
 
 function applyTemplateRecord(record: Wms.Label.TemplateEntity) {
   selectedTemplateId.value = record.id;
-  selectedBusinessType.value = record.businessType;
+  templateForm.businessType = record.businessType;
   selectedPaperKey.value = getPaperKeyBySize(record.paperWidth, record.paperHeight);
   templateForm.templateCode = record.templateCode;
   templateForm.templateName = record.templateName;
@@ -81,16 +108,15 @@ function applyTemplateRecord(record: Wms.Label.TemplateEntity) {
   templateForm.defaultTemplate = record.defaultTemplate;
   templateForm.remark = record.remark || '';
   designJsonText.value = JSON.stringify(record.templateJson, null, 2);
-  mountHiprintDesigner(record.templateJson);
 }
 
 function getCurrentTemplateJson(): HiprintTemplateJson | Record<string, unknown> {
-  if (!designJsonText.value) return createDemoTemplate(selectedPaperKey.value);
+  if (!designJsonText.value) return createBlankTemplate(selectedPaperKey.value);
 
   try {
     return JSON.parse(designJsonText.value) as Record<string, unknown>;
   } catch {
-    return createDemoTemplate(selectedPaperKey.value);
+    return createBlankTemplate(selectedPaperKey.value);
   }
 }
 
@@ -139,33 +165,36 @@ async function mountHiprintDesigner(templateJson = getCurrentTemplateJson()) {
   }
 }
 
-async function loadTemplateList(selectId?: number) {
+async function loadTemplateList() {
   templateLoading.value = true;
   try {
     const { data: page, error } = await fetchGetLabelTemplatePage({
-      current: 1,
-      size: 100,
-      businessType: selectedBusinessType.value
+      current: pagination.current,
+      size: pagination.size,
+      keyWords: searchForm.keyWords.trim() || undefined,
+      businessType: searchForm.businessType || undefined,
+      enabled: searchForm.enabled
     });
 
     if (error || !page) return;
 
     templateList.value = page.records || [];
-
-    const nextRecord =
-      templateList.value.find(item => item.id === selectId) ??
-      templateList.value.find(item => item.defaultTemplate) ??
-      templateList.value[0];
-
-    if (nextRecord) {
-      applyTemplateRecord(nextRecord);
-    } else {
-      resetTemplateForm();
-      loadDemoTemplate();
-    }
+    pagination.total = Number(page.total || 0);
   } finally {
     templateLoading.value = false;
   }
+}
+
+function handleSearch() {
+  pagination.current = 1;
+  loadTemplateList();
+}
+
+function resetSearch() {
+  searchForm.keyWords = '';
+  searchForm.businessType = '';
+  searchForm.enabled = undefined;
+  handleSearch();
 }
 
 function loadDemoTemplate() {
@@ -182,17 +211,36 @@ function loadBlankTemplate() {
   mountHiprintDesigner(json);
 }
 
-function createNewTemplate() {
-  resetTemplateForm();
-  loadDemoTemplate();
+async function createNewTemplate() {
+  resetTemplateForm((searchForm.businessType || 'model1') as Wms.Label.TemplateKey);
+  const json = createBlankTemplate(selectedPaperKey.value);
+  designJsonText.value = JSON.stringify(json, null, 2);
+  pageMode.value = 'designer';
+  await mountHiprintDesigner(json);
+}
+
+async function designTemplate(record: Wms.Label.TemplateEntity) {
+  applyTemplateRecord(record);
+  pageMode.value = 'designer';
+  await mountHiprintDesigner(record.templateJson);
+}
+
+function backToList() {
+  pageMode.value = 'list';
+  hiprintTemplateRef.value = null;
+  hiprintReady.value = false;
+  loadTemplateList();
 }
 
 function handlePaperChange() {
-  loadDemoTemplate();
+  loadBlankTemplate();
 }
 
 function handleBusinessChange() {
-  loadTemplateList();
+  if (!selectedTemplateId.value) {
+    selectedPaperKey.value = currentBusinessOption.value.paperKey;
+    loadBlankTemplate();
+  }
 }
 
 function applyJsonToDesigner() {
@@ -217,6 +265,65 @@ function parseDesignerJson() {
   }
 }
 
+function appendPreviewHtml(container: JQuery<HTMLElement>, html: unknown) {
+  container.empty();
+
+  if (typeof html === 'string') {
+    container.html(html);
+    return;
+  }
+
+  if (html instanceof HTMLElement) {
+    container.append(html);
+    return;
+  }
+
+  if (html && typeof html === 'object' && 'jquery' in html) {
+    container.append(html as JQuery<HTMLElement>);
+    return;
+  }
+
+  throw new Error('hiprint未返回可预览的HTML内容');
+}
+
+function renderTemplatePreview() {
+  const templateJson = previewTemplateJson.value;
+  const previewContainer = $('#label-template-preview');
+
+  if (!templateJson || !previewContainer.length) return;
+
+  previewLoading.value = true;
+
+  try {
+    const previewTemplate = new hiprint.PrintTemplate({
+      template: normalizeHiprintTemplateForPrint(templateJson as any),
+      dataMode: 1
+    });
+
+    if (!previewTemplate?.getHtml) {
+      throw new Error('当前hiprint实例不支持getHtml预览');
+    }
+
+    appendPreviewHtml(previewContainer, previewTemplate.getHtml(createPrintSampleData()));
+  } catch (error) {
+    previewContainer.empty();
+    window.$message?.error(`模板预览失败：${error instanceof Error ? error.message : String(error)}`);
+  } finally {
+    previewLoading.value = false;
+  }
+}
+
+async function openTemplatePreview() {
+  const templateJson = parseDesignerJson();
+
+  if (!templateJson) return;
+
+  previewTemplateJson.value = templateJson;
+  previewVisible.value = true;
+  await nextTick();
+  renderTemplatePreview();
+}
+
 async function saveTemplateToBackend() {
   const templateJson = parseDesignerJson();
 
@@ -236,7 +343,7 @@ async function saveTemplateToBackend() {
       id: selectedTemplateId.value,
       templateCode,
       templateName,
-      businessType: selectedBusinessType.value,
+      businessType: templateForm.businessType,
       paperWidth: currentPaper.value.width,
       paperHeight: currentPaper.value.height,
       templateJson,
@@ -248,10 +355,26 @@ async function saveTemplateToBackend() {
     if (error || !saved) return;
 
     window.$message?.success('标签模板已保存');
-    await loadTemplateList(saved.id);
+    applyTemplateRecord(saved);
+    await loadTemplateList();
   } finally {
     saveLoading.value = false;
   }
+}
+
+async function deleteTemplate(record: Wms.Label.TemplateEntity) {
+  await window.$messageBox?.confirm(`确认删除标签模板“${record.templateName}”？`, '删除确认', {
+    confirmButtonText: '删除',
+    cancelButtonText: '取消',
+    type: 'warning'
+  });
+
+  const { error } = await fetchDeleteLabelTemplate(record.id);
+
+  if (error) return;
+
+  window.$message?.success('标签模板已删除');
+  await loadTemplateList();
 }
 
 async function deleteCurrentTemplate() {
@@ -260,17 +383,27 @@ async function deleteCurrentTemplate() {
     return;
   }
 
-  await window.$messageBox?.confirm('确认删除当前标签模板？', '删除确认', {
-    confirmButtonText: '删除',
-    cancelButtonText: '取消',
-    type: 'warning'
+  await deleteTemplate({
+    id: selectedTemplateId.value,
+    templateCode: templateForm.templateCode,
+    templateName: templateForm.templateName,
+    businessType: templateForm.businessType,
+    paperWidth: currentPaper.value.width,
+    paperHeight: currentPaper.value.height,
+    templateJson: getCurrentTemplateJson() as Record<string, unknown>,
+    enabled: templateForm.enabled,
+    defaultTemplate: templateForm.defaultTemplate,
+    remark: templateForm.remark
   });
+  backToList();
+}
 
-  const { error } = await fetchDeleteLabelTemplate(selectedTemplateId.value);
+async function setTemplateAsDefault(record: Wms.Label.TemplateEntity) {
+  const { error } = await fetchSetDefaultLabelTemplate(record.id);
 
   if (error) return;
 
-  window.$message?.success('标签模板已删除');
+  window.$message?.success('已设为默认模板');
   await loadTemplateList();
 }
 
@@ -285,7 +418,22 @@ async function setCurrentAsDefault() {
   if (error) return;
 
   window.$message?.success('已设为默认模板');
-  await loadTemplateList(selectedTemplateId.value);
+  templateForm.defaultTemplate = true;
+  await loadTemplateList();
+}
+
+async function updateTemplateStatus(record: Wms.Label.TemplateEntity, enabled: boolean | string | number) {
+  const { error } = await fetchUpdateLabelTemplateStatus({
+    id: record.id,
+    enabled: Boolean(enabled)
+  });
+
+  if (error) {
+    record.enabled = !enabled;
+    return;
+  }
+
+  await loadTemplateList();
 }
 
 async function handleEnabledChange(enabled: boolean | string | number) {
@@ -298,7 +446,26 @@ async function handleEnabledChange(enabled: boolean | string | number) {
 
   if (error) return;
 
-  await loadTemplateList(selectedTemplateId.value);
+  await loadTemplateList();
+}
+
+async function copyTemplate(record: Wms.Label.TemplateEntity) {
+  const { error } = await fetchSaveLabelTemplate({
+    templateCode: createTemplateCode(),
+    templateName: `${record.templateName} 副本`,
+    businessType: record.businessType,
+    paperWidth: record.paperWidth,
+    paperHeight: record.paperHeight,
+    templateJson: record.templateJson,
+    enabled: true,
+    defaultTemplate: false,
+    remark: record.remark || ''
+  });
+
+  if (error) return;
+
+  window.$message?.success('标签模板已复制');
+  await loadTemplateList();
 }
 
 function loadJsonFromLocal() {
@@ -343,153 +510,301 @@ onBeforeUnmount(() => {
 
 <template>
   <div class="label-designer min-h-640px flex-col-stretch gap-16px overflow-hidden">
-    <ElCard class="card-wrapper">
+    <ElCard v-if="pageMode === 'list'" class="card-wrapper">
       <template #header>
         <div class="flex flex-wrap items-center justify-between gap-12px">
           <div>
-            <p class="text-16px font-medium">标签设计</p>
-            <p class="mt-4px text-12px text-gray-500">
-              独立版式设计器：版式由 hiprint 维护，业务字段和打印数据仍由 WMS 标签管理维护
-            </p>
+            <p class="text-16px font-medium">标签管理</p>
+            <p class="mt-4px text-12px text-gray-500">管理标签模板记录；点击设计进入 hiprint 版式设计器</p>
           </div>
-          <div v-loading="templateLoading" class="flex flex-wrap items-center justify-end gap-10px">
-            <ElSelect v-model="selectedBusinessType" class="w-180px" @change="handleBusinessChange">
-              <ElOption
-                v-for="business in labelBusinessOptions"
-                :key="business.key"
-                :label="business.label"
-                :value="business.key"
-              />
-            </ElSelect>
-            <ElSelect
-              v-model="selectedTemplateId"
-              class="w-220px"
-              clearable
-              placeholder="请选择模板"
-              @change="id => currentTemplateRecord && applyTemplateRecord(currentTemplateRecord)"
-            >
-              <ElOption
-                v-for="template in templateList"
-                :key="template.id"
-                :label="template.defaultTemplate ? `${template.templateName}（默认）` : template.templateName"
-                :value="template.id"
-              />
-            </ElSelect>
-            <ElInput v-model="templateForm.templateName" class="w-180px" placeholder="模板名称" />
-            <ElInput v-model="templateForm.templateCode" class="w-180px" placeholder="模板编码" />
-            <ElSelect v-model="selectedPaperKey" class="w-180px" @change="handlePaperChange">
-              <ElOption v-for="paper in paperOptions" :key="paper.key" :label="paper.label" :value="paper.key" />
-            </ElSelect>
-            <ElSwitch
-              v-model="templateForm.enabled"
-              inline-prompt
-              active-text="启用"
-              inactive-text="停用"
-              @change="handleEnabledChange"
-            />
-            <ElButton @click="createNewTemplate">新建模板</ElButton>
-            <ElButton :disabled="!selectedTemplateId" @click="setCurrentAsDefault">设为默认</ElButton>
-            <ElButton :disabled="!selectedTemplateId" type="danger" plain @click="deleteCurrentTemplate">删除</ElButton>
-            <ElButton @click="loadDemoTemplate">恢复示例</ElButton>
-            <ElButton @click="loadBlankTemplate">清空画布</ElButton>
-            <ElButton @click="loadJsonFromLocal">读取本地JSON</ElButton>
-            <ElButton type="primary" :loading="saveLoading" @click="saveTemplateToBackend">保存模板</ElButton>
-            <ElButton type="success" @click="printByBrowser">
-              <template #icon>
-                <icon-mdi-printer />
-              </template>
-              浏览器打印
-            </ElButton>
-          </div>
+          <ElButton type="primary" @click="createNewTemplate">
+            <template #icon>
+              <icon-ic-round-plus />
+            </template>
+            新增模板
+          </ElButton>
         </div>
       </template>
 
-      <ElAlert v-if="hiprintError" :title="hiprintError" type="error" show-icon :closable="false" class="mb-12px" />
+      <ElForm :model="searchForm" inline label-width="76px" class="label-template-search">
+        <ElFormItem label="关键词">
+          <ElInput
+            v-model="searchForm.keyWords"
+            clearable
+            class="w-220px"
+            placeholder="模板名称/编码"
+            @keyup.enter="handleSearch"
+          />
+        </ElFormItem>
+        <ElFormItem label="标签类型">
+          <ElSelect v-model="searchForm.businessType" clearable class="w-180px" placeholder="全部类型">
+            <ElOption
+              v-for="business in labelBusinessOptions"
+              :key="business.key"
+              :label="business.label"
+              :value="business.key"
+            />
+          </ElSelect>
+        </ElFormItem>
+        <ElFormItem label="状态">
+          <ElSelect v-model="searchForm.enabled" clearable class="w-140px" placeholder="全部状态">
+            <ElOption label="启用" :value="true" />
+            <ElOption label="停用" :value="false" />
+          </ElSelect>
+        </ElFormItem>
+        <ElFormItem>
+          <ElButton type="primary" @click="handleSearch">查询</ElButton>
+          <ElButton @click="resetSearch">重置</ElButton>
+        </ElFormItem>
+      </ElForm>
 
-      <div class="label-designer__meta">
-        <ElTag type="info">{{ currentBusinessOption.label }}</ElTag>
-        <ElTag :type="templateForm.defaultTemplate ? 'success' : 'info'">
-          {{ templateForm.defaultTemplate ? '默认模板' : '普通模板' }}
-        </ElTag>
-        <ElTag>{{ templateList.length }} 个模板</ElTag>
-        <ElTag>{{ currentPaper.width }}mm x {{ currentPaper.height }}mm</ElTag>
-        <ElTag :type="hiprintReady ? 'success' : 'warning'">
-          {{ hiprintReady ? '设计器已就绪' : '设计器初始化中' }}
-        </ElTag>
+      <ElTable v-loading="templateLoading" :data="templateList" border height="calc(100vh - 340px)">
+        <ElTableColumn prop="templateName" label="模板名称" min-width="180" show-overflow-tooltip />
+        <ElTableColumn prop="templateCode" label="模板编码" min-width="170" show-overflow-tooltip />
+        <ElTableColumn label="标签类型" min-width="160">
+          <template #default="{ row }">
+            {{ getBusinessLabel(row.businessType) }}
+          </template>
+        </ElTableColumn>
+        <ElTableColumn label="尺寸" width="140">
+          <template #default="{ row }">
+            {{ formatPaperSize(row) }}
+          </template>
+        </ElTableColumn>
+        <ElTableColumn label="默认" width="90" align="center">
+          <template #default="{ row }">
+            <ElTag :type="row.defaultTemplate ? 'success' : 'info'">{{ row.defaultTemplate ? '是' : '否' }}</ElTag>
+          </template>
+        </ElTableColumn>
+        <ElTableColumn label="启用状态" width="120" align="center">
+          <template #default="{ row }">
+            <ElSwitch
+              v-model="row.enabled"
+              inline-prompt
+              active-text="启用"
+              inactive-text="停用"
+              @change="value => updateTemplateStatus(row, value)"
+            />
+          </template>
+        </ElTableColumn>
+        <ElTableColumn prop="updateTime" label="更新时间" min-width="170" show-overflow-tooltip />
+        <ElTableColumn label="操作" width="300" fixed="right" align="center">
+          <template #default="{ row }">
+            <ElButton size="small" type="primary" plain @click="designTemplate(row)">设计</ElButton>
+            <ElButton size="small" @click="copyTemplate(row)">复制</ElButton>
+            <ElButton size="small" :disabled="row.defaultTemplate || !row.enabled" @click="setTemplateAsDefault(row)">
+              设为默认
+            </ElButton>
+            <ElButton size="small" type="danger" plain @click="deleteTemplate(row)">删除</ElButton>
+          </template>
+        </ElTableColumn>
+      </ElTable>
+
+      <div class="mt-12px flex justify-end">
+        <ElPagination
+          v-model:current-page="pagination.current"
+          v-model:page-size="pagination.size"
+          background
+          layout="total, sizes, prev, pager, next"
+          :page-sizes="[10, 20, 50, 100]"
+          :total="pagination.total"
+          @size-change="handleSearch"
+          @current-change="loadTemplateList"
+        />
       </div>
     </ElCard>
 
-    <div class="label-designer__workspace sm:flex-1-hidden">
-      <aside class="label-designer__panel label-designer__components">
-        <div class="label-designer__panel-title">拖拽组件列表</div>
-        <ElScrollbar>
-          <div class="label-designer__component-section">
-            <p class="label-designer__section-title">基础</p>
-            <div class="label-designer__component-grid">
-              <button
-                v-for="item in baseComponents"
-                :key="item.tid"
-                class="label-designer__component-card ep-draggable-item"
-                type="button"
-                :tid="item.tid"
-              >
-                <span class="label-designer__component-icon">{{ item.iconText }}</span>
-                <span class="label-designer__component-name">{{ item.label }}</span>
-                <span class="label-designer__component-desc">{{ item.description }}</span>
-              </button>
+    <template v-else>
+      <ElCard class="card-wrapper">
+        <template #header>
+          <div class="flex flex-wrap items-center justify-between gap-12px">
+            <div>
+              <p class="text-16px font-medium">模板设计</p>
+              <p class="mt-4px text-12px text-gray-500">版式由 hiprint 维护，业务字段和打印数据由 WMS 标签打印维护</p>
+            </div>
+            <div class="flex flex-wrap items-center justify-end gap-10px">
+              <ElButton @click="backToList">返回列表</ElButton>
+              <ElButton @click="setCurrentAsDefault">设为默认</ElButton>
+              <ElButton :disabled="!selectedTemplateId" type="danger" plain @click="deleteCurrentTemplate">
+                删除
+              </ElButton>
+              <ElButton @click="loadDemoTemplate">恢复示例</ElButton>
+              <ElButton @click="loadBlankTemplate">清空画布</ElButton>
+              <ElButton @click="loadJsonFromLocal">读取本地JSON</ElButton>
+              <ElButton type="primary" :loading="saveLoading" @click="saveTemplateToBackend">保存模板</ElButton>
+              <ElButton @click="openTemplatePreview">预览</ElButton>
+              <ElButton type="success" @click="printByBrowser">
+                <template #icon>
+                  <icon-mdi-printer />
+                </template>
+                浏览器打印
+              </ElButton>
             </div>
           </div>
+        </template>
 
-          <div class="label-designer__component-section">
-            <p class="label-designer__section-title">辅助</p>
-            <div class="label-designer__component-grid">
-              <button
-                v-for="item in assistComponents"
-                :key="item.tid"
-                class="label-designer__component-card ep-draggable-item"
-                type="button"
-                :tid="item.tid"
-              >
-                <span class="label-designer__component-icon">{{ item.iconText }}</span>
-                <span class="label-designer__component-name">{{ item.label }}</span>
-                <span class="label-designer__component-desc">{{ item.description }}</span>
-              </button>
-            </div>
-          </div>
-        </ElScrollbar>
-      </aside>
+        <ElAlert v-if="hiprintError" :title="hiprintError" type="error" show-icon :closable="false" class="mb-12px" />
 
-      <main class="label-designer__canvas">
-        <div class="label-designer__canvas-toolbar">
-          <span>hiprint设计画布</span>
-          <div class="hiprint-printPagination"></div>
+        <ElForm :model="templateForm" label-width="78px" class="label-template-form">
+          <ElRow :gutter="12">
+            <ElCol :xl="5" :lg="6" :md="8" :sm="12">
+              <ElFormItem label="模板名称">
+                <ElInput v-model="templateForm.templateName" placeholder="请输入模板名称" />
+              </ElFormItem>
+            </ElCol>
+            <ElCol :xl="5" :lg="6" :md="8" :sm="12">
+              <ElFormItem label="模板编码">
+                <ElInput v-model="templateForm.templateCode" placeholder="请输入模板编码" />
+              </ElFormItem>
+            </ElCol>
+            <ElCol :xl="4" :lg="5" :md="8" :sm="12">
+              <ElFormItem label="标签类型">
+                <ElSelect v-model="templateForm.businessType" class="w-full" @change="handleBusinessChange">
+                  <ElOption
+                    v-for="business in labelBusinessOptions"
+                    :key="business.key"
+                    :label="business.label"
+                    :value="business.key"
+                  />
+                </ElSelect>
+              </ElFormItem>
+            </ElCol>
+            <ElCol :xl="4" :lg="5" :md="8" :sm="12">
+              <ElFormItem label="纸张尺寸">
+                <ElSelect v-model="selectedPaperKey" class="w-full" @change="handlePaperChange">
+                  <ElOption v-for="paper in paperOptions" :key="paper.key" :label="paper.label" :value="paper.key" />
+                </ElSelect>
+              </ElFormItem>
+            </ElCol>
+            <ElCol :xl="3" :lg="4" :md="8" :sm="12">
+              <ElFormItem label="启用">
+                <ElSwitch
+                  v-model="templateForm.enabled"
+                  inline-prompt
+                  active-text="启用"
+                  inactive-text="停用"
+                  @change="handleEnabledChange"
+                />
+              </ElFormItem>
+            </ElCol>
+            <ElCol :xl="3" :lg="4" :md="8" :sm="12">
+              <ElFormItem label="默认">
+                <ElSwitch v-model="templateForm.defaultTemplate" inline-prompt active-text="是" inactive-text="否" />
+              </ElFormItem>
+            </ElCol>
+            <ElCol :span="24">
+              <ElFormItem label="备注">
+                <ElInput v-model="templateForm.remark" placeholder="请输入备注" />
+              </ElFormItem>
+            </ElCol>
+          </ElRow>
+        </ElForm>
+
+        <div class="label-designer__meta">
+          <ElTag type="info">{{ currentBusinessOption.label }}</ElTag>
+          <ElTag :type="templateForm.defaultTemplate ? 'success' : 'info'">
+            {{ templateForm.defaultTemplate ? '默认模板' : '普通模板' }}
+          </ElTag>
+          <ElTag>{{ currentPaper.width }}mm x {{ currentPaper.height }}mm</ElTag>
+          <ElTag :type="hiprintReady ? 'success' : 'warning'">
+            {{ hiprintReady ? '设计器已就绪' : '设计器初始化中' }}
+          </ElTag>
         </div>
-        <ElScrollbar class="label-designer__canvas-scroll">
-          <div id="hiprint-printTemplate" class="label-designer__hiprint"></div>
-        </ElScrollbar>
-      </main>
+      </ElCard>
 
-      <aside class="label-designer__panel label-designer__settings">
-        <ElTabs model-value="setting" class="h-full">
-          <ElTabPane label="属性" name="setting">
-            <ElScrollbar height="520px">
-              <div id="PrintElementOptionSetting" class="label-designer__option-setting"></div>
-            </ElScrollbar>
-          </ElTabPane>
-          <ElTabPane label="JSON" name="json">
-            <div class="label-designer__json-actions">
-              <ElButton size="small" @click="syncJsonFromDesigner">刷新JSON</ElButton>
-              <ElButton size="small" type="primary" @click="applyJsonToDesigner">应用JSON</ElButton>
+      <div class="label-designer__workspace sm:flex-1-hidden">
+        <aside class="label-designer__panel label-designer__components">
+          <div class="label-designer__panel-title">拖拽组件列表</div>
+          <ElScrollbar>
+            <div class="label-designer__component-section">
+              <p class="label-designer__section-title">基础</p>
+              <div class="label-designer__component-grid">
+                <button
+                  v-for="item in baseComponents"
+                  :key="item.tid"
+                  class="label-designer__component-card ep-draggable-item"
+                  type="button"
+                  :tid="item.tid"
+                >
+                  <span class="label-designer__component-icon">{{ item.iconText }}</span>
+                  <span class="label-designer__component-name">{{ item.label }}</span>
+                  <span class="label-designer__component-desc">{{ item.description }}</span>
+                </button>
+              </div>
             </div>
-            <ElInput v-model="designJsonText" type="textarea" :rows="22" resize="none" spellcheck="false" />
-          </ElTabPane>
-        </ElTabs>
-      </aside>
-    </div>
+
+            <div class="label-designer__component-section">
+              <p class="label-designer__section-title">辅助</p>
+              <div class="label-designer__component-grid">
+                <button
+                  v-for="item in assistComponents"
+                  :key="item.tid"
+                  class="label-designer__component-card ep-draggable-item"
+                  type="button"
+                  :tid="item.tid"
+                >
+                  <span class="label-designer__component-icon">{{ item.iconText }}</span>
+                  <span class="label-designer__component-name">{{ item.label }}</span>
+                  <span class="label-designer__component-desc">{{ item.description }}</span>
+                </button>
+              </div>
+            </div>
+          </ElScrollbar>
+        </aside>
+
+        <main class="label-designer__canvas">
+          <div class="label-designer__canvas-toolbar">
+            <span>hiprint设计画布</span>
+            <div class="hiprint-printPagination"></div>
+          </div>
+          <ElScrollbar class="label-designer__canvas-scroll">
+            <div id="hiprint-printTemplate" class="label-designer__hiprint"></div>
+          </ElScrollbar>
+        </main>
+
+        <aside class="label-designer__panel label-designer__settings">
+          <ElTabs model-value="setting" class="h-full">
+            <ElTabPane label="属性" name="setting">
+              <ElScrollbar height="520px">
+                <div id="PrintElementOptionSetting" class="label-designer__option-setting"></div>
+              </ElScrollbar>
+            </ElTabPane>
+            <ElTabPane label="JSON" name="json">
+              <div class="label-designer__json-actions">
+                <ElButton size="small" @click="syncJsonFromDesigner">刷新JSON</ElButton>
+                <ElButton size="small" type="primary" @click="applyJsonToDesigner">应用JSON</ElButton>
+              </div>
+              <ElInput v-model="designJsonText" type="textarea" :rows="22" resize="none" spellcheck="false" />
+            </ElTabPane>
+          </ElTabs>
+        </aside>
+      </div>
+
+      <ElDialog
+        v-model="previewVisible"
+        title="模板预览"
+        width="min(1100px, 92vw)"
+        destroy-on-close
+        append-to-body
+        @opened="renderTemplatePreview"
+      >
+        <div v-loading="previewLoading" class="label-designer__preview-stage">
+          <div id="label-template-preview" class="label-designer__preview-content"></div>
+        </div>
+      </ElDialog>
+    </template>
   </div>
 </template>
 
 <style scoped>
+.label-template-search {
+  margin-bottom: 12px;
+}
+
+.label-template-form {
+  margin-bottom: 4px;
+}
+
 .label-designer__meta {
   display: flex;
   flex-wrap: wrap;
@@ -498,8 +813,10 @@ onBeforeUnmount(() => {
 
 .label-designer__workspace {
   display: grid;
-  min-height: 0;
+  flex: 1;
+  min-height: 560px;
   grid-template-columns: 240px minmax(0, 1fr) 360px;
+  align-items: stretch;
   gap: 16px;
 }
 
@@ -625,6 +942,28 @@ onBeforeUnmount(() => {
   justify-content: flex-end;
   gap: 8px;
   margin-bottom: 8px;
+}
+
+.label-designer__preview-stage {
+  min-height: 420px;
+  max-height: 72vh;
+  overflow: auto;
+  border: 1px solid var(--el-border-color-light);
+  border-radius: 6px;
+  padding: 24px;
+  background: #eef0f4;
+}
+
+.label-designer__preview-content {
+  display: flex;
+  min-width: max-content;
+  justify-content: center;
+}
+
+.label-designer__preview-content :deep(.hiprint-printPaper) {
+  margin: 0 auto;
+  background: #fff;
+  box-shadow: 0 8px 24px rgb(15 23 42 / 12%);
 }
 
 @media (max-width: 1280px) {

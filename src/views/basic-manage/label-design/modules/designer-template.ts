@@ -270,6 +270,21 @@ export function createPrintSampleData() {
   return {
     text: '通用文本',
     barcode: '1234567890',
-    qrcode: 'https://ccsimple.github.io/vue-plugin-hiprint/'
+    qrcode: 'https://ccsimple.github.io/vue-plugin-hiprint/',
+    customerCode: 'KH-001',
+    orderCode: 'SO-20260624001',
+    batchCode: 'LOT-20260624',
+    materialCode: 'MAT-0001',
+    materialName: '预览物料',
+    modelSpec: '100mm x 80mm',
+    qty: 1000,
+    quantity: 100,
+    color: '本色',
+    productionDate: '2026-06-24',
+    worker: '张三',
+    inspector: '李四',
+    supplier: '预览供应商',
+    remark: '预览备注',
+    checkResult: '合格 / 李四'
   } satisfies Record<string, unknown>;
 }

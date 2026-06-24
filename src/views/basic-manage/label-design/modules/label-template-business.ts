@@ -1,4 +1,4 @@
-import { getLabelTemplate, labelTemplates } from '../../label-management/modules/label-templates';
+import { labelTemplates } from '../../label-management/modules/label-templates';
 import type { DesignerPaperKey } from './designer-template';
 
 export interface LabelBusinessOption {
@@ -24,10 +24,23 @@ export function getLabelBusinessOption(key: Wms.Label.TemplateKey) {
   return labelBusinessOptions.find(item => item.key === key) ?? labelBusinessOptions[0];
 }
 
-export function createTemplateCode(businessType: Wms.Label.TemplateKey) {
-  return `${businessType}-default`;
+function padNumber(value: number) {
+  return String(value).padStart(2, '0');
 }
 
-export function createTemplateName(businessType: Wms.Label.TemplateKey) {
-  return getLabelTemplate(businessType).label;
+export function createTemplateCode(date = new Date()) {
+  const stamp = [
+    date.getFullYear(),
+    padNumber(date.getMonth() + 1),
+    padNumber(date.getDate()),
+    padNumber(date.getHours()),
+    padNumber(date.getMinutes()),
+    padNumber(date.getSeconds())
+  ].join('');
+
+  return `label-${stamp}`;
+}
+
+export function createTemplateName() {
+  return '新建标签模板';
 }

@@ -59,3 +59,10 @@ const printData = createPrintSampleData();
 
 assert.equal(printData.barcode, '1234567890');
 assert.match(String(printData.qrcode), /vue-plugin-hiprint/);
+assert.equal(printData.customerCode, 'KH-001');
+assert.equal(printData.orderCode, 'SO-20260624001');
+assert.equal(printData.batchCode, 'LOT-20260624');
+assert.equal(printData.materialCode, 'MAT-0001');
+assert.equal(printData.materialName, '预览物料');
+assert.equal(printData.quantity, 100);
+assert.equal(printData.supplier, '预览供应商');

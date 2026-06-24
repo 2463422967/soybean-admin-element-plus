@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, nextTick, onMounted, reactive, ref, watch } from 'vue';
+import { computed, nextTick, onMounted, reactive, ref, shallowRef, watch } from 'vue';
 import printJS from 'print-js';
 import { defaultElementTypeProvider as DefaultElementTypeProvider, disAutoConnect, hiprint } from 'vue-plugin-hiprint';
 import {
@@ -11,17 +11,25 @@ import {
   fetchGetSupplierList
 } from '@/service/api';
 import { labelPrintStyle } from './modules/label-print';
+import {
+  createHiprintPrintPageStyle,
+  normalizeHiprintTemplateForPrint,
+  resolvePrintableHiprintTemplate
+} from './modules/label-hiprint-template';
 import { buildLabelQrText } from './modules/label-qrcode';
 import { getLabelTemplate, labelTemplates } from './modules/label-templates';
 import LabelPreview from './modules/label-preview.vue';
 
-defineOptions({ name: 'LabelManagement' });
+defineOptions({ name: 'LabelPrint' });
 
 const selectedTemplateKey = ref<Wms.Label.TemplateKey>('model1');
 const printCopies = ref(1);
 const formData = reactive<Wms.Label.FormData>({});
 const lookupLoading = ref(false);
 const afterPrintCallback = ref<NonNullable<Wms.Label.ExternalTemplateData['afterPrint']> | null>(null);
+const previewLoading = ref(false);
+const hiprintPreviewEnabled = ref(false);
+const previewTemplateRef = shallowRef<Wms.Label.TemplateEntity | null>(null);
 
 const fieldOptions = reactive<Record<NonNullable<Wms.Label.FieldConfig['optionsKey']>, Wms.Label.FieldOption[]>>({
   productionOrders: [],
@@ -51,12 +59,23 @@ function toMaterial(value: unknown) {
   return null;
 }
 
-watch(selectedTemplateKey, () => {
+watch(selectedTemplateKey, async () => {
   resetForm();
+  await loadPreviewTemplate();
 });
 
-onMounted(() => {
-  loadBaseOptions();
+watch(
+  formData,
+  () => {
+    if (hiprintPreviewEnabled.value) {
+      renderHiprintPreview();
+    }
+  },
+  { deep: true }
+);
+
+onMounted(async () => {
+  await Promise.all([loadBaseOptions(), loadPreviewTemplate()]);
 });
 
 async function loadBaseOptions() {
@@ -220,6 +239,86 @@ function buildHiprintPrintData() {
   return data;
 }
 
+function appendHiprintHtml(container: JQuery<HTMLElement>, html: unknown) {
+  container.empty();
+
+  if (typeof html === 'string') {
+    container.html(html);
+    return;
+  }
+
+  if (html instanceof HTMLElement) {
+    container.append(html);
+    return;
+  }
+
+  if (html && typeof html === 'object' && 'jquery' in html) {
+    container.append(html as JQuery<HTMLElement>);
+    return;
+  }
+
+  throw new Error('hiprint未返回可预览的HTML内容');
+}
+
+function renderHiprintPreview() {
+  const template = previewTemplateRef.value;
+  const previewContainer = $('#label-hiprint-preview');
+
+  if (!template?.templateJson || !previewContainer.length) return;
+
+  previewLoading.value = true;
+
+  try {
+    disAutoConnect();
+    hiprint.init({
+      providers: [new DefaultElementTypeProvider()]
+    });
+
+    const printableTemplate = resolvePrintableHiprintTemplate(template, currentTemplate.value);
+    const previewTemplate = new hiprint.PrintTemplate({
+      template: normalizeHiprintTemplateForPrint(printableTemplate),
+      dataMode: 1
+    });
+
+    if (!previewTemplate?.getHtml) {
+      throw new Error('当前hiprint实例不支持getHtml预览');
+    }
+
+    appendHiprintHtml(previewContainer, previewTemplate.getHtml(buildHiprintPrintData()));
+    hiprintPreviewEnabled.value = true;
+  } catch (error) {
+    previewContainer.empty();
+    hiprintPreviewEnabled.value = false;
+    window.$message?.error(`标签预览失败：${error instanceof Error ? error.message : String(error)}`);
+  } finally {
+    previewLoading.value = false;
+  }
+}
+
+async function loadPreviewTemplate() {
+  previewLoading.value = true;
+
+  try {
+    const { data: template, error } = await fetchGetDefaultLabelTemplate(selectedTemplateKey.value);
+
+    if (!error && template?.templateJson) {
+      previewTemplateRef.value = template;
+      hiprintPreviewEnabled.value = true;
+      await nextTick();
+      renderHiprintPreview();
+      return;
+    }
+
+    previewTemplateRef.value = null;
+    hiprintPreviewEnabled.value = false;
+  } catch {
+    previewTemplateRef.value = null;
+    hiprintPreviewEnabled.value = false;
+  } finally {
+    previewLoading.value = false;
+  }
+}
+
 async function printStaticLabels() {
   await nextTick();
 
@@ -240,8 +339,9 @@ async function printByHiprint(template: Wms.Label.TemplateEntity) {
   });
 
   const printData = printCopyItems.value.map(() => buildHiprintPrintData());
+  const printableTemplate = resolvePrintableHiprintTemplate(template, currentTemplate.value);
   const printTemplate = new hiprint.PrintTemplate({
-    template: template.templateJson,
+    template: normalizeHiprintTemplateForPrint(printableTemplate),
     dataMode: 1
   });
 
@@ -250,7 +350,8 @@ async function printByHiprint(template: Wms.Label.TemplateEntity) {
     printData,
     {},
     {
-      styleHandler: () => '<link rel="stylesheet" type="text/css" media="print" href="/print-lock.css" />'
+      styleHandler: () =>
+        `<link rel="stylesheet" type="text/css" media="print" href="/print-lock.css" />${createHiprintPrintPageStyle(printableTemplate)}`
     }
   );
 }
@@ -279,7 +380,12 @@ async function setTemplateAndData(options: Wms.Label.ExternalTemplateData) {
   printCopies.value = options.printCopies ?? 1;
   afterPrintCallback.value = options.afterPrint ?? null;
 
-  if (options.lookupMaterial === false || !formData.materialCode) return;
+  await loadPreviewTemplate();
+
+  if (options.lookupMaterial === false || !formData.materialCode) {
+    renderHiprintPreview();
+    return;
+  }
 
   lookupLoading.value = true;
   try {
@@ -287,6 +393,8 @@ async function setTemplateAndData(options: Wms.Label.ExternalTemplateData) {
   } finally {
     lookupLoading.value = false;
   }
+
+  await renderHiprintPreview();
 }
 
 defineExpose({
@@ -300,7 +408,7 @@ defineExpose({
     <ElCard class="card-wrapper">
       <template #header>
         <div class="flex items-center justify-between">
-          <p>标签管理</p>
+          <p>标签打印</p>
           <div class="flex items-center gap-12px">
             <ElButton @click="resetForm">重置</ElButton>
             <ElButton type="primary" @click="printLabels">
@@ -385,8 +493,9 @@ defineExpose({
         </div>
       </template>
       <ElScrollbar class="h-full">
-        <div class="label-preview-stage">
-          <LabelPreview :template="currentTemplate" :form-data="formData" />
+        <div v-loading="previewLoading" class="label-preview-stage">
+          <div v-show="hiprintPreviewEnabled" id="label-hiprint-preview" class="label-hiprint-preview"></div>
+          <LabelPreview v-if="!hiprintPreviewEnabled" :template="currentTemplate" :form-data="formData" />
         </div>
       </ElScrollbar>
     </ElCard>
@@ -410,6 +519,16 @@ defineExpose({
   justify-content: center;
   padding: 20px;
   background: #f3f4f6;
+}
+
+.label-hiprint-preview {
+  max-width: 100%;
+}
+
+.label-hiprint-preview :deep(.hiprint-printPaper) {
+  margin: 0 auto;
+  background: #fff;
+  box-shadow: 0 2px 10px rgb(15 23 42 / 12%);
 }
 
 .label-print-source {

@@ -192,6 +192,7 @@ declare namespace Wms {
     }
 
     interface TemplateSearchParams extends Api.Common.CommonSearchParams {
+      keyWords?: string;
       businessType?: TemplateKey;
       enabled?: boolean;
     }
