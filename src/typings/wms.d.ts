@@ -252,6 +252,83 @@ declare namespace Wms {
     }
   }
 
+  namespace DocumentFlow {
+    type SourceMode = 'KINGDEE' | 'MANUAL' | string;
+
+    interface MappingQueryParams {
+      operationCategory?: string;
+      operationScene?: string;
+      enabled?: boolean;
+    }
+
+    interface SourceDocumentMapping {
+      id?: number;
+      operationCategory: string;
+      operationCategoryName: string;
+      operationScene: string;
+      operationSceneName: string;
+      sourceMode: SourceMode;
+      kingdeeFormId?: string;
+      kingdeeBillType?: string;
+      adapterCode?: string;
+      queryTemplateCode?: string;
+      enabled: boolean;
+      defaultMapping: boolean;
+      sort?: number;
+      remark?: string;
+    }
+
+    type SourceDocumentMappingSaveParams = SourceDocumentMapping;
+
+    interface SourceDocumentOptionQueryParams {
+      operationCategory?: string;
+      operationScene?: string;
+    }
+
+    interface SourceDocumentOption {
+      label: string;
+      sourceMode: SourceMode;
+      kingdeeFormId?: string;
+      kingdeeBillType?: string;
+      adapterCode?: string;
+      defaultOption?: boolean;
+    }
+
+    interface SourceDocumentQueryParams {
+      current?: number;
+      size?: number;
+      keyWords?: string;
+      operationCategory?: string;
+      operationScene?: string;
+      sourceMode?: SourceMode;
+      formId?: string;
+      adapterCode?: string;
+      billId?: string;
+    }
+
+    interface SourceDocumentLine {
+      sourceEntryId: string;
+      sourceMaterialId?: string;
+      sourceMaterialCode?: string;
+      sourceMaterialName?: string;
+      sourceQty?: number;
+      sourceUnit?: string;
+      sourceLineSnapshotJson?: string;
+    }
+
+    interface SourceDocument {
+      sourceSystem: string;
+      sourceFormId: string;
+      sourceBillId: string;
+      sourceBillNo: string;
+      sourceBillType?: string;
+      sourceSnapshotJson?: string;
+      lines: SourceDocumentLine[];
+    }
+
+    type SourceDocumentPage = Api.Common.PaginatingQueryRecord<SourceDocument>;
+  }
+
   namespace Inventory {
     interface SearchParams {
       current: number;
