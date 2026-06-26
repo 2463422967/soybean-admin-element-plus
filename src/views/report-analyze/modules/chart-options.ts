@@ -20,8 +20,17 @@ function getBaseGrid() {
   };
 }
 
-export function getInventoryCategoryOptions(data: Wms.ReportAnalysis.InventoryCategoryRatio[] = []): ECOption {
+function withReportChartDefaults(options: ECOption): ECOption {
   return {
+    animation: false,
+    animationDuration: 0,
+    animationDurationUpdate: 0,
+    ...options
+  } as ECOption;
+}
+
+export function getInventoryCategoryOptions(data: Wms.ReportAnalysis.InventoryCategoryRatio[] = []): ECOption {
+  return withReportChartDefaults({
     legend: {
       bottom: 0,
       type: 'scroll'
@@ -41,13 +50,13 @@ export function getInventoryCategoryOptions(data: Wms.ReportAnalysis.InventoryCa
     tooltip: {
       trigger: 'item'
     }
-  };
+  });
 }
 
 export function getInventoryWarningDistributionOptions(
   data: Wms.ReportAnalysis.InventoryWarningDistribution[] = []
 ): ECOption {
-  return {
+  return withReportChartDefaults({
     grid: getBaseGrid(),
     series: [
       {
@@ -73,13 +82,13 @@ export function getInventoryWarningDistributionOptions(
       data: data.map(item => item.warningGroupName || '未分类'),
       type: 'category'
     }
-  };
+  });
 }
 
 export function getWarehouseComparisonOptions(data: Wms.ReportAnalysis.InventoryStockComparison[] = []): ECOption {
   const filteredData = data.filter(item => !HIDDEN_STOCK_COMPARISON_WAREHOUSES.has(item.warehouseName || ''));
 
-  return {
+  return withReportChartDefaults({
     grid: getBaseGrid(),
     series: [
       {
@@ -110,11 +119,11 @@ export function getWarehouseComparisonOptions(data: Wms.ReportAnalysis.Inventory
       name: '库存数量',
       type: 'value'
     }
-  };
+  });
 }
 
 export function getWorkloadTrendOptions(data: Wms.ReportAnalysis.WorkloadTrend[] = []): ECOption {
-  return {
+  return withReportChartDefaults({
     grid: getBaseGrid(),
     legend: {
       bottom: 0,
@@ -151,11 +160,11 @@ export function getWorkloadTrendOptions(data: Wms.ReportAnalysis.WorkloadTrend[]
       name: '作业量',
       type: 'value'
     }
-  };
+  });
 }
 
 export function getAssignmentTypeOptions(data: Wms.ReportAnalysis.AssignmentTypeDistribution[] = []): ECOption {
-  return {
+  return withReportChartDefaults({
     legend: {
       bottom: 0,
       type: 'scroll'
@@ -175,11 +184,11 @@ export function getAssignmentTypeOptions(data: Wms.ReportAnalysis.AssignmentType
     tooltip: {
       trigger: 'item'
     }
-  };
+  });
 }
 
 export function getPersonPerformanceOptions(data: Wms.ReportAnalysis.PersonPerformanceComparison[] = []): ECOption {
-  return {
+  return withReportChartDefaults({
     grid: {
       ...getBaseGrid(),
       bottom: 48
@@ -211,7 +220,7 @@ export function getPersonPerformanceOptions(data: Wms.ReportAnalysis.PersonPerfo
       name: '完成作业数',
       type: 'value'
     }
-  };
+  });
 }
 
 export function getWorkQualityAnalysisOptions(data: Wms.ReportAnalysis.WorkQualityAnalysis = {}): ECOption {
@@ -225,7 +234,7 @@ export function getWorkQualityAnalysisOptions(data: Wms.ReportAnalysis.WorkQuali
     data.waitInspectionCount || 0
   ];
 
-  return {
+  return withReportChartDefaults({
     grid: getBaseGrid(),
     series: [
       {
@@ -251,5 +260,5 @@ export function getWorkQualityAnalysisOptions(data: Wms.ReportAnalysis.WorkQuali
       data: labels,
       type: 'category'
     }
-  };
+  });
 }

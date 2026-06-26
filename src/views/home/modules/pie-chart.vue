@@ -2,7 +2,6 @@
 import { watch } from 'vue';
 import { useAppStore } from '@/store/modules/app';
 import { useEcharts } from '@/hooks/common/echarts';
-import { $t } from '@/locales';
 
 defineOptions({ name: 'PieChart' });
 
@@ -21,15 +20,15 @@ const { domRef, updateOptions } = useEcharts(() => ({
   },
   series: [
     {
-      color: ['#5da8ff', '#8e9dff', '#fedc69', '#26deca'],
-      name: $t('page.home.schedule'),
+      color: ['#0077b6', '#238b45', '#f2c94c', '#c2410c', '#667085'],
+      name: '库存结构',
       type: 'pie',
-      radius: ['45%', '75%'],
+      radius: ['48%', '72%'],
       avoidLabelOverlap: false,
       itemStyle: {
-        borderRadius: 10,
+        borderRadius: 8,
         borderColor: '#fff',
-        borderWidth: 1
+        borderWidth: 2
       },
       label: {
         show: false,
@@ -56,10 +55,11 @@ async function mockData() {
 
   updateOptions(opts => {
     opts.series[0].data = [
-      { name: $t('page.home.study'), value: 20 },
-      { name: $t('page.home.entertainment'), value: 10 },
-      { name: $t('page.home.work'), value: 40 },
-      { name: $t('page.home.rest'), value: 30 }
+      { name: '原材料', value: 34 },
+      { name: '半成品', value: 22 },
+      { name: '成品', value: 31 },
+      { name: '呆滞品', value: 7 },
+      { name: '待质检', value: 6 }
     ];
 
     return opts;
@@ -73,10 +73,11 @@ function updateLocale() {
     opts.series[0].name = originOpts.series[0].name;
 
     opts.series[0].data = [
-      { name: $t('page.home.study'), value: 20 },
-      { name: $t('page.home.entertainment'), value: 10 },
-      { name: $t('page.home.work'), value: 40 },
-      { name: $t('page.home.rest'), value: 30 }
+      { name: '原材料', value: 34 },
+      { name: '半成品', value: 22 },
+      { name: '成品', value: 31 },
+      { name: '呆滞品', value: 7 },
+      { name: '待质检', value: 6 }
     ];
 
     return opts;
@@ -100,7 +101,13 @@ init();
 
 <template>
   <ElCard class="card-wrapper">
-    <div ref="domRef" class="h-360px overflow-hidden"></div>
+    <template #header>
+      <div class="flex-y-center justify-between">
+        <span class="font-semibold">库存占用结构</span>
+        <ElTag type="success" effect="plain">总库容 78%</ElTag>
+      </div>
+    </template>
+    <div ref="domRef" class="h-336px overflow-hidden"></div>
   </ElCard>
 </template>
 

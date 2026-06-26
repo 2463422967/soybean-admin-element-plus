@@ -1,12 +1,13 @@
 <script setup lang="ts">
 import InventoryReport from '../inventory-report/index.vue';
 import OperationReport from '../operation-report/index.vue';
+import { getReportPageClass } from '../modules/report-layout';
 
 defineOptions({ name: 'TotalReport' });
 </script>
 
 <template>
-  <div class="min-h-500px flex-col-stretch gap-16px overflow-hidden lt-sm:overflow-auto">
+  <div :class="getReportPageClass()">
     <ElCard class="card-wrapper">
       <div>
         <h2 class="m-0 text-20px font-semibold">仓储综合看板</h2>
