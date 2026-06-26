@@ -9,6 +9,7 @@ import {
   getInventoryWarningDistributionOptions,
   getWarehouseComparisonOptions
 } from '../modules/chart-options';
+import { getReportPageClass } from '../modules/report-layout';
 
 defineOptions({ name: 'InventoryReport' });
 
@@ -100,7 +101,7 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div class="min-h-500px flex-col-stretch gap-16px overflow-hidden lt-sm:overflow-auto">
+  <div :class="getReportPageClass(embedded)">
     <ElCard v-if="!embedded" class="card-wrapper">
       <div class="flex flex-wrap items-center justify-between gap-12px">
         <div>

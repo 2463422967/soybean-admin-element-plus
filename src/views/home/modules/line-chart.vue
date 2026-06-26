@@ -2,7 +2,6 @@
 import { watch } from 'vue';
 import { useAppStore } from '@/store/modules/app';
 import { useEcharts } from '@/hooks/common/echarts';
-import { $t } from '@/locales';
 
 defineOptions({ name: 'LineChart' });
 
@@ -12,19 +11,22 @@ const { domRef, updateOptions } = useEcharts(() => ({
   tooltip: {
     trigger: 'axis',
     axisPointer: {
-      type: 'cross',
+      type: 'line',
       label: {
         backgroundColor: '#6a7985'
       }
     }
   },
   legend: {
-    data: [$t('page.home.downloadCount'), $t('page.home.registerCount')]
+    right: 16,
+    top: 8,
+    data: ['入库完成', '出库完成', '库内移动']
   },
   grid: {
-    left: '3%',
-    right: '4%',
-    bottom: '3%',
+    left: '2%',
+    right: '3%',
+    bottom: '2%',
+    top: 54,
     containLabel: true
   },
   xAxis: {
@@ -33,15 +35,21 @@ const { domRef, updateOptions } = useEcharts(() => ({
     data: [] as string[]
   },
   yAxis: {
-    type: 'value'
+    type: 'value',
+    name: '单据数',
+    splitLine: {
+      lineStyle: {
+        color: '#edf2f7'
+      }
+    }
   },
   series: [
     {
-      color: '#8e9dff',
-      name: $t('page.home.downloadCount'),
+      color: '#0077b6',
+      name: '入库完成',
       type: 'line',
       smooth: true,
-      stack: 'Total',
+      symbolSize: 7,
       areaStyle: {
         color: {
           type: 'linear',
@@ -52,11 +60,11 @@ const { domRef, updateOptions } = useEcharts(() => ({
           colorStops: [
             {
               offset: 0.25,
-              color: '#8e9dff'
+              color: 'rgba(0, 119, 182, 0.26)'
             },
             {
               offset: 1,
-              color: '#fff'
+              color: 'rgba(0, 119, 182, 0.02)'
             }
           ]
         }
@@ -67,11 +75,11 @@ const { domRef, updateOptions } = useEcharts(() => ({
       data: [] as number[]
     },
     {
-      color: '#26deca',
-      name: $t('page.home.registerCount'),
+      color: '#238b45',
+      name: '出库完成',
       type: 'line',
       smooth: true,
-      stack: 'Total',
+      symbolSize: 7,
       areaStyle: {
         color: {
           type: 'linear',
@@ -82,11 +90,11 @@ const { domRef, updateOptions } = useEcharts(() => ({
           colorStops: [
             {
               offset: 0.25,
-              color: '#26deca'
+              color: 'rgba(35, 139, 69, 0.22)'
             },
             {
               offset: 1,
-              color: '#fff'
+              color: 'rgba(35, 139, 69, 0.02)'
             }
           ]
         }
@@ -94,7 +102,20 @@ const { domRef, updateOptions } = useEcharts(() => ({
       emphasis: {
         focus: 'series'
       },
-      data: []
+      data: [] as number[]
+    },
+    {
+      color: '#b7791f',
+      name: '库内移动',
+      type: 'bar',
+      barWidth: 10,
+      itemStyle: {
+        borderRadius: [4, 4, 0, 0]
+      },
+      emphasis: {
+        focus: 'series'
+      },
+      data: [] as number[]
     }
   ]
 }));
@@ -105,9 +126,10 @@ async function mockData() {
   });
 
   updateOptions(opts => {
-    opts.xAxis.data = ['06:00', '08:00', '10:00', '12:00', '14:00', '16:00', '18:00', '20:00', '22:00', '24:00'];
-    opts.series[0].data = [4623, 6145, 6268, 6411, 1890, 4251, 2978, 3880, 3606, 4311];
-    opts.series[1].data = [2208, 2016, 2916, 4512, 8281, 2008, 1963, 2367, 2956, 678];
+    opts.xAxis.data = ['08:00', '10:00', '12:00', '14:00', '16:00', '18:00', '20:00', '22:00'];
+    opts.series[0].data = [12, 21, 34, 48, 65, 82, 113, 128];
+    opts.series[1].data = [8, 17, 26, 39, 54, 68, 84, 96];
+    opts.series[2].data = [5, 9, 8, 13, 17, 16, 21, 24];
 
     return opts;
   });
@@ -120,6 +142,7 @@ function updateLocale() {
     opts.legend.data = originOpts.legend.data;
     opts.series[0].name = originOpts.series[0].name;
     opts.series[1].name = originOpts.series[1].name;
+    opts.series[2].name = originOpts.series[2].name;
 
     return opts;
   });
@@ -142,7 +165,13 @@ init();
 
 <template>
   <ElCard class="card-wrapper">
-    <div ref="domRef" class="h-360px overflow-hidden"></div>
+    <template #header>
+      <div class="flex-y-center justify-between">
+        <span class="font-semibold">今日作业节拍</span>
+        <ElTag type="info" effect="plain">按完成时间统计</ElTag>
+      </div>
+    </template>
+    <div ref="domRef" class="h-336px overflow-hidden"></div>
   </ElCard>
 </template>
 

@@ -1,43 +1,65 @@
 <script setup lang="ts">
 import { computed } from 'vue';
-import { $t } from '@/locales';
 
 defineOptions({ name: 'ProjectNews' });
 
 interface NewsItem {
   id: number;
+  type: 'success' | 'warning' | 'primary' | 'info' | 'danger';
+  tag: string;
   content: string;
   time: string;
 }
 
 const newses = computed<NewsItem[]>(() => [
-  { id: 1, content: $t('page.home.projectNews.desc1'), time: '2021-05-28 22:22:22' },
-  { id: 2, content: $t('page.home.projectNews.desc2'), time: '2021-10-27 10:24:54' },
-  { id: 3, content: $t('page.home.projectNews.desc3'), time: '2021-10-31 22:43:12' },
-  { id: 4, content: $t('page.home.projectNews.desc4'), time: '2021-11-03 20:33:31' },
-  { id: 5, content: $t('page.home.projectNews.desc5'), time: '2021-11-07 22:45:32' }
+  { id: 1, type: 'success', tag: '收货', content: '采购单 PO240624-018 已完成质检，等待 A-03 区上架。', time: '09:18' },
+  {
+    id: 2,
+    type: 'primary',
+    tag: '拣货',
+    content: '波次 WB240624-006 已释放，涉及 18 个库位、42 个 SKU。',
+    time: '09:42'
+  },
+  { id: 3, type: 'warning', tag: '盘点', content: 'C-12-04 库位盘点差异 6 件，已生成复盘任务。', time: '10:06' },
+  { id: 4, type: 'info', tag: '移库', content: '呆滞物料从 B 区转入缓冲区，预计释放 12 个托盘位。', time: '10:31' },
+  { id: 5, type: 'danger', tag: '异常', content: 'PDA 离线任务 3 条超过 20 分钟未回传，请班组长确认。', time: '10:48' }
 ]);
 </script>
 
 <template>
   <ElCard class="card-wrapper">
     <template #header>
-      <ElRow>
-        <ElCol :span="18">{{ $t('page.home.projectNews.title') }}</ElCol>
-        <ElCol :span="6" class="text-right">
-          <a class="text-primary" href="javascript:;">{{ $t('page.home.projectNews.moreNews') }}</a>
-        </ElCol>
-      </ElRow>
+      <div class="flex-y-center justify-between">
+        <span class="font-semibold">作业动态</span>
+        <ElButton text type="primary">查看全部</ElButton>
+      </div>
     </template>
-    <ElTimeline>
-      <ElTimelineItem v-for="item in newses" :key="item.id" :timestamp="item.time" placement="top">
-        <ElSpace>
-          <SoybeanAvatar class="size-48px!" />
+    <ElTimeline class="operation-timeline">
+      <ElTimelineItem v-for="item in newses" :key="item.id" :timestamp="item.time" placement="top" :type="item.type">
+        <div class="operation-timeline__item">
+          <ElTag :type="item.type" effect="light">{{ item.tag }}</ElTag>
           <p>{{ item.content }}</p>
-        </ElSpace>
+        </div>
       </ElTimelineItem>
     </ElTimeline>
   </ElCard>
 </template>
 
-<style scoped></style>
+<style scoped lang="scss">
+.operation-timeline {
+  --el-timeline-node-size-normal: 11px;
+}
+
+.operation-timeline__item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  min-height: 38px;
+
+  p {
+    margin: 1px 0 0;
+    color: #344054;
+    line-height: 22px;
+  }
+}
+</style>
